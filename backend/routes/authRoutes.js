@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser } = require('../controller/authController');
+const { registerUser, loginUser } = require('../controllers/authController');
 
 // Định nghĩa các endpoints
 // /api/auth/register

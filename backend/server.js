@@ -3,6 +3,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 // === ĐÃ SỬA: CHẠY DOTENV TRƯỚC ===
 // Phải chạy dotenv.config() ngay lập tức ở dòng đầu tiên
@@ -19,9 +20,12 @@ connectDB();
 // Khởi tạo app Express
 const app = express();
 app.use(express.json()); 
+app.use(cookieParser());
 app.use(cors());
 const authRoutes = require('./routes/authRoutes');
+const householdRoutes = require('./routes/householdRoutes');
 app.use('/api/auth', authRoutes);
+app.use('/api/households', householdRoutes);
 // API Test
 app.get('/', (req, res) => {
   res.send('API is running...');
