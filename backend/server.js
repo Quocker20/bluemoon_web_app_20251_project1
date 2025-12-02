@@ -24,8 +24,12 @@ app.use(cookieParser());
 app.use(cors());
 const authRoutes = require('./routes/authRoutes');
 const householdRoutes = require('./routes/householdRoutes');
+const feeRoutes = require('./routes/feeRoutes');
+const billRoutes = require('./routes/billRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/households', householdRoutes);
+app.use('/api/fees', feeRoutes);
+app.use('/api/bills', billRoutes);
 // API Test
 app.get('/', (req, res) => {
   res.send('API is running...');
