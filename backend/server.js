@@ -21,7 +21,10 @@ connectDB();
 const app = express();
 app.use(express.json()); 
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // Địa chỉ chính xác của Frontend
+  credentials: true // QUAN TRỌNG: Cho phép nhận Cookie/Token
+}));
 const authRoutes = require('./routes/authRoutes');
 const householdRoutes = require('./routes/householdRoutes');
 const feeRoutes = require('./routes/feeRoutes');

@@ -1,136 +1,61 @@
-// File: backend/controllers/billController.js
 const Bill = require('../models/BillModel');
 const Fee = require('../models/FeeModel');
 const Household = require('../models/HouseholdModel');
 
-// @desc    Tạo hóa đơn tháng cho một hộ gia đình cụ thể
-// @route   POST /api/bills
-// @access  Private/Admin
-const createMonthlyBill = async (req, res) => {
-  const { householdId, month, year, title } = req.body;
+// 1. Tạo hóa đơn hàng loạt (Generate)
+const generateAllMonthlyBills = async (req, res) => {
+  const { month, year } = req.body;
+  if (!month || !year) return res.status(400).json({ message: 'Thiếu tháng/năm' });
 
   try {
-    // 1. Kiểm tra xem hộ này đã có hóa đơn tháng này chưa?
-    const existingBill = await Bill.findOne({ household: householdId, month, year });
-    if (existingBill) {
-      return res.status(400).json({ message: `Hộ này đã có hóa đơn tháng ${month}/${year}` });
-    }
+    const existing = await Bill.countDocuments({ month, year });
+    if (existing > 0) return res.status(400).json({ message: `Tháng ${month}/${year} đã có hóa đơn.` });
 
-    // 2. Lấy thông tin hộ khẩu (để biết diện tích, nhân khẩu)
-    const household = await Household.findById(householdId);
-    if (!household) {
-      return res.status(404).json({ message: 'Không tìm thấy hộ khẩu' });
-    }
-
-    // 3. Lấy danh sách các khoản phí đang HOẠT ĐỘNG
+    const households = await Household.find({});
     const activeFees = await Fee.find({ isActive: true });
-    
-    if (activeFees.length === 0) {
-      return res.status(400).json({ message: 'Chưa có khoản phí nào được kích hoạt' });
-    }
 
-    let totalAmount = 0;
-    const billItems = [];
+    if (!activeFees.length) return res.status(400).json({ message: 'Chưa có phí nào active' });
 
-    // 4. LOGIC TÍNH TOÁN (CORE)
-    // Duyệt qua từng loại phí để tính tiền
-    activeFees.forEach(fee => {
-      let quantity = 0;
-      let amount = 0;
-
-      // Logic switch-case dựa trên đơn vị tính
-      switch (fee.calculationUnit) {
-        case 'PER_M2': // Tính theo diện tích
-          quantity = household.area;
-          amount = fee.unitPrice * quantity;
-          break;
+    const newBills = [];
+    households.forEach(hh => {
+      let total = 0;
+      const items = [];
+      activeFees.forEach(fee => {
+        let qty = 1;
+        if (fee.calculationUnit === 'PER_M2') qty = hh.area;
+        else if (fee.calculationUnit === 'PER_HEAD') qty = hh.residents ? hh.residents.length : 0;
         
-        case 'PER_HEAD': // Tính theo đầu người
-          quantity = household.residents.length;
-          amount = fee.unitPrice * quantity;
-          break;
-
-        case 'FIXED': // Giá cố định
-        default:
-          quantity = 1;
-          amount = fee.unitPrice;
-          break;
-      }
-
-      // Cộng dồn tổng tiền
-      totalAmount += amount;
-
-      // Đẩy vào danh sách chi tiết
-      billItems.push({
-        feeName: fee.name,
-        unitPrice: fee.unitPrice,
-        quantity: quantity,
-        amount: amount
+        const amt = fee.unitPrice * qty;
+        total += amt;
+        items.push({ feeName: fee.name, unitPrice: fee.unitPrice, quantity: qty, amount: amt });
       });
+
+      if (total > 0) {
+        newBills.push({
+          household: hh._id,
+          title: `Hóa đơn tháng ${month}/${year}`,
+          month, year, items, totalAmount: total, status: 'Unpaid'
+        });
+      }
     });
 
-    // 5. Lưu hóa đơn vào Database
-    const newBill = await Bill.create({
-      household: householdId,
-      title: title || `Hóa đơn phí dịch vụ tháng ${month}/${year}`,
-      month,
-      year,
-      items: billItems,
-      totalAmount,
-      status: 'Unpaid' // Mặc định là chưa đóng
-    });
-
-    res.status(201).json(newBill);
-
+    if (newBills.length > 0) await Bill.insertMany(newBills);
+    
+    res.status(201).json({ message: `Đã tạo ${newBills.length} hóa đơn.` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Lấy danh sách hóa đơn (có thể lọc theo hộ gia đình)
-// @route   GET /api/bills
+// 2. Lấy danh sách hóa đơn
 const getBills = async (req, res) => {
   try {
-    const { householdId } = req.query;
-    let query = {};
-    if (householdId) {
-      query.household = householdId;
-    }
-
-    // populate('household') để lấy luôn tên chủ hộ thay vì chỉ hiện ID
-    const bills = await Bill.find(query)
-        .populate('household', 'householdNumber ownerName') 
-        .sort({ createdAt: -1 });
-        
+    // Populate để lấy thông tin số phòng từ ID hộ khẩu
+    const bills = await Bill.find().populate('household', 'householdNumber ownerName').sort({ createdAt: -1 });
     res.json(bills);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Ghi nhận thanh toán cho một hóa đơn
-// @route   PUT /api/bills/:id/pay
-// @access  Private/Admin
-const payBill = async (req, res) => {
-  try {
-    const bill = await Bill.findById(req.params.id);
-
-    if (bill) {
-      if (bill.status === 'Paid') {
-        return res.status(400).json({ message: 'Hóa đơn này đã được thanh toán trước đó rồi!' });
-      }
-
-      bill.status = 'Paid';
-      bill.paidAt = Date.now(); // Lưu thời điểm đóng tiền
-
-      const updatedBill = await bill.save();
-      res.json(updatedBill);
-    } else {
-      res.status(404).json({ message: 'Không tìm thấy hóa đơn' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-module.exports = { createMonthlyBill, getBills, payBill };
+module.exports = { generateAllMonthlyBills, getBills };
