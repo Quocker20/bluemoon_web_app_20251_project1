@@ -2,7 +2,7 @@ const Bill = require('../models/BillModel');
 const Fee = require('../models/FeeModel');
 const Household = require('../models/HouseholdModel');
 
-// 1. Tạo hóa đơn hàng loạt (Generate)
+// 1. Tạo hóa đơn hàng loạt (GIỮ NGUYÊN)
 const generateAllMonthlyBills = async (req, res) => {
   const { month, year } = req.body;
   if (!month || !year) return res.status(400).json({ message: 'Thiếu tháng/năm' });
@@ -47,10 +47,9 @@ const generateAllMonthlyBills = async (req, res) => {
   }
 };
 
-// 2. Lấy danh sách hóa đơn
+// 2. Lấy danh sách hóa đơn (GIỮ NGUYÊN)
 const getBills = async (req, res) => {
   try {
-    // Populate để lấy thông tin số phòng từ ID hộ khẩu
     const bills = await Bill.find().populate('household', 'householdNumber ownerName').sort({ createdAt: -1 });
     res.json(bills);
   } catch (error) {
@@ -58,4 +57,42 @@ const getBills = async (req, res) => {
   }
 };
 
-module.exports = { generateAllMonthlyBills, getBills };
+// --- [MỚI] 3. Lấy chi tiết 1 hóa đơn (Cho màn hình thanh toán) ---
+const getBillById = async (req, res) => {
+  try {
+    // Populate để lấy tên chủ hộ, số phòng hiển thị cho rõ
+    const bill = await Bill.findById(req.params.id).populate('household', 'householdNumber ownerName');
+    if (!bill) return res.status(404).json({ message: 'Không tìm thấy hóa đơn' });
+    res.json(bill);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- [MỚI] 4. Xác nhận thanh toán ---
+const payBill = async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill) return res.status(404).json({ message: 'Không tìm thấy hóa đơn' });
+
+    if (bill.status === 'Paid') {
+      return res.status(400).json({ message: 'Hóa đơn này đã thanh toán rồi!' });
+    }
+
+    // Cập nhật trạng thái
+    bill.status = 'Paid';
+    await bill.save();
+
+    res.json({ message: 'Thanh toán thành công!', bill });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// XUẤT ĐỦ 4 HÀM
+module.exports = { 
+  generateAllMonthlyBills, 
+  getBills,
+  getBillById,
+  payBill
+};

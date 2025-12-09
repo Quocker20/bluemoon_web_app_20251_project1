@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
+// Thêm useNavigate vào import
 import { Table, Card, Tag, Button, Modal, Form, InputNumber, message, Space, Typography } from 'antd';
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, ReloadOutlined, DollarOutlined } from '@ant-design/icons'; // Thêm DollarOutlined
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Thêm hook chuyển trang
 
 const { Text } = Typography;
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Khởi tạo hook
   
-  // State cho Modal tạo hóa đơn
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form] = Form.useForm();
 
-  // Hàm lấy dữ liệu
+  // Hàm fetchBills (GIỮ NGUYÊN)
   const fetchBills = async () => {
     setLoading(true);
     try {
@@ -31,7 +33,7 @@ const BillList = () => {
     fetchBills();
   }, []);
 
-  // Xử lý tính toán hóa đơn mới
+  // Hàm handleGenerateBills (GIỮ NGUYÊN)
   const handleGenerateBills = async (values) => {
     setCreating(true);
     try {
@@ -49,7 +51,7 @@ const BillList = () => {
     }
   };
 
-  // --- CẤU HÌNH BẢNG CON (CHI TIẾT PHÍ) ---
+  // expandedRowRender (GIỮ NGUYÊN)
   const expandedRowRender = (record) => {
     const detailColumns = [
       { title: 'Khoản phí', dataIndex: 'feeName', key: 'feeName' },
@@ -79,14 +81,12 @@ const BillList = () => {
         dataSource={record.items} 
         pagination={false} 
         rowKey={(item) => item._id || item.feeName}
-        size="small" // Bảng nhỏ gọn hơn
+        size="small" 
         bordered
       />
     );
   };
-  // ----------------------------------------
 
-  // Cấu hình bảng cha (Danh sách hóa đơn)
   const columns = [
     { 
       title: 'Căn hộ', 
@@ -108,6 +108,23 @@ const BillList = () => {
       render: (status) => status === 'Paid' 
         ? <Tag color="green">Đã đóng</Tag> 
         : <Tag color="orange">Chưa đóng</Tag>
+    },
+    // --- [MỚI] CỘT THAO TÁC ---
+    {
+      title: 'Thao tác',
+      key: 'action',
+      render: (_, record) => (
+        record.status === 'Unpaid' && (
+          <Button 
+            type="primary" 
+            size="small"
+            icon={<DollarOutlined />}
+            onClick={() => navigate(`/bills/pay/${record._id}`)}
+          >
+            Thu tiền
+          </Button>
+        )
+      )
     }
   ];
 
@@ -139,12 +156,10 @@ const BillList = () => {
         columns={columns} 
         rowKey="_id" 
         loading={loading}
-        // --- KÍCH HOẠT TÍNH NĂNG BẢNG LỒNG NHAU ---
         expandable={{
           expandedRowRender,
           rowExpandable: (record) => record.items && record.items.length > 0,
         }}
-        // -------------------------------------------
       />
 
       <Modal

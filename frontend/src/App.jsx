@@ -1,12 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, message } from 'antd';
-import { 
-  FileTextOutlined, 
-  DollarOutlined, 
-  LogoutOutlined, 
+import {
+  FileTextOutlined,
+  DollarOutlined,
+  LogoutOutlined,
   HomeOutlined,
-  UsergroupAddOutlined 
+  UsergroupAddOutlined
 } from '@ant-design/icons';
 
 // --- IMPORT CÁC MÀN HÌNH ---
@@ -16,10 +16,9 @@ import FeeList from './pages/fee/FeeList';
 import HouseholdList from './pages/household/HouseholdList';
 import AddHousehold from './pages/household/AddHousehold';
 import EditHousehold from './pages/household/EditHousehold';
-
-// --- [MỚI] IMPORT MÀN HÌNH QUẢN LÝ PHÍ ---
 import AddFee from './pages/fee/AddFee';
 import EditFee from './pages/fee/EditFee';
+import PaymentBill from './pages/bill/PaymentBill';
 // ------------------------------------------
 
 const { Header, Sider, Content } = Layout;
@@ -41,11 +40,11 @@ const MainLayout = ({ children }) => {
 
     // Nếu đang ở bất kỳ trang nào bắt đầu bằng /households -> Sáng menu Hộ khẩu
     if (path.startsWith('/households')) return '/households';
-    
+
     // Tương tự cho Phí và Hóa đơn
     if (path.startsWith('/fees')) return '/fees';
     if (path.startsWith('/bills')) return '/bills';
-    
+
     // Mặc định là trang chủ
     return '/';
   };
@@ -79,11 +78,11 @@ const MainLayout = ({ children }) => {
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', color: '#fff', lineHeight: '32px', fontWeight: 'bold' }}>
           BlueMoon
         </div>
-        <Menu 
-          theme="dark" 
-          mode="inline" 
-          selectedKeys={[getActiveKey()]} 
-          items={menuItems} 
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[getActiveKey()]}
+          items={menuItems}
         />
       </Sider>
       <Layout className="site-layout">
@@ -138,7 +137,8 @@ function App() {
 
         {/* QUẢN LÝ HÓA ĐƠN */}
         <Route path="/bills" element={<PrivateRoute><BillList /></PrivateRoute>} />
-        
+        <Route path="/bills/pay/:id" element={<PrivateRoute><PaymentBill /></PrivateRoute>} />
+
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
