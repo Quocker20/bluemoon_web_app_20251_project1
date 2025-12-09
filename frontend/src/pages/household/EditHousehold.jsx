@@ -23,7 +23,7 @@ const EditHousehold = () => {
       } catch (error) {
         toast.error('Không tìm thấy hộ khẩu!');
         console.log(error);
-        navigate('/admin/households');
+        navigate('/households');
       } finally {
         setDataLoading(false);
       }
@@ -36,7 +36,7 @@ const EditHousehold = () => {
     try {
       await axiosClient.put(`/households/${id}`, values);
       toast.success('Cập nhật thành công!');
-      navigate('/admin/households');
+      navigate('/households');
     } catch (error) {
        toast.error('Lỗi: ' + (error.response?.data?.message || error.message));
     } finally {
@@ -49,7 +49,7 @@ const EditHousehold = () => {
   return (
     <Card>
       <div style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/admin/households')}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/households')}>
           Quay lại
         </Button>
       </div>

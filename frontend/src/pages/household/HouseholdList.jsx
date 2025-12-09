@@ -86,23 +86,21 @@ const HouseholdList = () => {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          {/* NÚT XEM: Đã gắn hàm handleViewDetail */}
-          <Button 
-            icon={<EyeOutlined />} 
+          <Button
+            icon={<EyeOutlined />}
             size="small"
             onClick={() => handleViewDetail(record)}
           >
-            Xem
           </Button>
-          
-          <Button 
-            icon={<EditOutlined />} 
-            type="primary" 
-            ghost 
+
+          <Button
+            icon={<EditOutlined />}
+            type="primary"
+            ghost
             size="small"
-            onClick={() => navigate(`/admin/households/edit/${record._id}`)}
+            // --- SỬA DÒNG NÀY: Bỏ '/admin', sửa thành '/households/edit/...' ---
+            onClick={() => navigate(`/households/edit/${record._id}`)}
           >
-            Sửa
           </Button>
 
           <Popconfirm
@@ -122,18 +120,19 @@ const HouseholdList = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Title level={3}>Quản lý Hộ khẩu</Title>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={() => navigate('/admin/households/new')}
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          // --- SỬA DÒNG NÀY: Bỏ '/admin/households/new', sửa thành '/households/add' ---
+          onClick={() => navigate('/households/add')}
         >
           Thêm hộ mới
         </Button>
       </div>
 
-      <Table 
-        columns={columns} 
-        dataSource={households} 
+      <Table
+        columns={columns}
+        dataSource={households}
         rowKey="_id"
         loading={loading}
         bordered
@@ -162,7 +161,7 @@ const HouseholdList = () => {
             </Descriptions>
 
             <Title level={5} style={{ marginTop: 20 }}>Danh sách nhân khẩu ({selectedHousehold.residents?.length || 0})</Title>
-            
+
             <List
               itemLayout="horizontal"
               dataSource={selectedHousehold.residents}

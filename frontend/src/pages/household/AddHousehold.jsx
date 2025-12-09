@@ -18,7 +18,7 @@ const AddHousehold = () => {
     try {
       await axiosClient.post('/households', values);
       toast.success('Thêm hộ khẩu thành công!');
-      navigate('/admin/households');
+      navigate('/households');
     } catch (error) {
       toast.error('Lỗi: ' + (error.response?.data?.message || error.message));
     } finally {
@@ -29,7 +29,7 @@ const AddHousehold = () => {
   return (
     <Card>
       <div style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/admin/households')}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/households')}>
           Quay lại
         </Button>
       </div>

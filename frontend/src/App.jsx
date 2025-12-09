@@ -1,25 +1,29 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, message } from 'antd';
-import { 
-  FileTextOutlined, 
-  DollarOutlined, 
-  LogoutOutlined, 
+import {
+  FileTextOutlined,
+  DollarOutlined,
+  LogoutOutlined,
   HomeOutlined,
-  UsergroupAddOutlined // Icon cho Hộ khẩu
+  UsergroupAddOutlined
 } from '@ant-design/icons';
 
-// --- IMPORT ĐÚNG THEO CẤU TRÚC THƯ MỤC TRONG ẢNH ---
+// --- IMPORT CÁC MÀN HÌNH ---
 import LoginScreen from './pages/LoginScreen';
 import BillList from './pages/bill/BillList';
 import FeeList from './pages/fee/FeeList';
-// Giả định file danh sách hộ khẩu nằm ở đây (theo quy tắc đặt tên của bạn)
-// Nếu tên file của bạn khác (ví dụ HouseholdManager.jsx), hãy sửa dòng này
-import HouseholdList from './pages/household/HouseholdList'; 
+import HouseholdList from './pages/household/HouseholdList';
+
+// !!! QUAN TRỌNG: Bạn cần đảm bảo đã tạo 2 file này trong thư mục pages/household
+// Nếu chưa có, hãy tạo file rỗng trước để không bị lỗi code
+import HouseholdAdd from './pages/household/AddHousehold';
+import HouseholdEdit from './pages/household/EditHousehold';
+// -----------------------------------------------------------------------
 
 const { Header, Sider, Content } = Layout;
 
-// 1. Component Layout chính
+// 1. Layout Chính
 const MainLayout = ({ children }) => {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('userInfo')) || { username: 'Admin' };
@@ -30,7 +34,6 @@ const MainLayout = ({ children }) => {
     window.location.href = '/login';
   };
 
-  // MENU ĐẦY ĐỦ 3 CHỨC NĂNG
   const menuItems = [
     {
       key: '/',
@@ -40,7 +43,7 @@ const MainLayout = ({ children }) => {
     {
       key: '/households',
       icon: <UsergroupAddOutlined />,
-      label: <Link to="/households">Quản lý Hộ khẩu</Link>, // Đã thêm lại
+      label: <Link to="/households">Quản lý Hộ khẩu</Link>,
     },
     {
       key: '/fees',
@@ -54,17 +57,22 @@ const MainLayout = ({ children }) => {
     },
   ];
 
+  // Logic để highlight menu cha khi đang ở trang con (VD: đang ở /households/add vẫn sáng menu Hộ khẩu)
+  const selectedKey = menuItems.find(item => location.pathname.startsWith(item.key) && item.key !== '/')
+    ? menuItems.find(item => location.pathname.startsWith(item.key)).key
+    : '/';
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible theme="dark">
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', color: '#fff', lineHeight: '32px', fontWeight: 'bold' }}>
           BlueMoon
         </div>
-        <Menu 
-          theme="dark" 
-          mode="inline" 
-          selectedKeys={[location.pathname]} 
-          items={menuItems} 
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          items={menuItems}
         />
       </Sider>
       <Layout className="site-layout">
@@ -87,7 +95,7 @@ const MainLayout = ({ children }) => {
   );
 };
 
-// 2. Component bảo vệ Route
+// 2. Bảo vệ Route
 const PrivateRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('userInfo'));
   return user ? <MainLayout>{children}</MainLayout> : <Navigate to="/login" />;
@@ -101,13 +109,13 @@ function App() {
     <Router>
       <Routes>
         {/* Route Login */}
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/" /> : <LoginScreen />} 
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" /> : <LoginScreen />}
         />
 
-        {/* --- CÁC ROUTE CẦN ĐĂNG NHẬP --- */}
-        
+        {/* --- KHU VỰC CẦN ĐĂNG NHẬP --- */}
+
         {/* Trang chủ */}
         <Route
           path="/"
@@ -119,7 +127,7 @@ function App() {
           }
         />
 
-        {/* Trang Quản lý Hộ khẩu (ĐÃ KHÔI PHỤC) */}
+        {/* 1. Danh sách */}
         <Route
           path="/households"
           element={
@@ -128,8 +136,26 @@ function App() {
             </PrivateRoute>
           }
         />
+        {/* 2. Trang Thêm mới (Route con) */}
+        <Route
+          path="/households/add"
+          element={
+            <PrivateRoute>
+              <HouseholdAdd />
+            </PrivateRoute>
+          }
+        />
+        {/* 3. Trang Sửa (Route con có tham số id) */}
+        <Route
+          path="/households/edit/:id"
+          element={
+            <PrivateRoute>
+              <HouseholdEdit />
+            </PrivateRoute>
+          }
+        />
 
-        {/* Trang Quản lý Phí */}
+        {/* === QUẢN LÝ PHÍ === */}
         <Route
           path="/fees"
           element={
@@ -139,7 +165,7 @@ function App() {
           }
         />
 
-        {/* Trang Quản lý Hóa đơn */}
+        {/* === QUẢN LÝ HÓA ĐƠN === */}
         <Route
           path="/bills"
           element={
@@ -149,6 +175,7 @@ function App() {
           }
         />
 
+        {/* Catch-all: Đường dẫn lạ -> Về trang chủ */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
