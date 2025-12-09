@@ -9,14 +9,18 @@ import {
   UsergroupAddOutlined 
 } from '@ant-design/icons';
 
-// --- IMPORT CÁC MÀN HÌNH (Đúng tên file bạn cung cấp) ---
+// --- IMPORT CÁC MÀN HÌNH ---
 import LoginScreen from './pages/LoginScreen';
 import BillList from './pages/bill/BillList';
 import FeeList from './pages/fee/FeeList';
 import HouseholdList from './pages/household/HouseholdList';
 import AddHousehold from './pages/household/AddHousehold';
 import EditHousehold from './pages/household/EditHousehold';
-// --------------------------------------------------------
+
+// --- [MỚI] IMPORT MÀN HÌNH QUẢN LÝ PHÍ ---
+import AddFee from './pages/fee/AddFee';
+import EditFee from './pages/fee/EditFee';
+// ------------------------------------------
 
 const { Header, Sider, Content } = Layout;
 
@@ -31,12 +35,11 @@ const MainLayout = ({ children }) => {
     window.location.href = '/login';
   };
 
-  // --- SỬA LOGIC MENU TẠI ĐÂY ---
   // Hàm xác định menu nào đang sáng dựa trên URL hiện tại
   const getActiveKey = () => {
     const path = location.pathname;
 
-    // Nếu đang ở bất kỳ trang nào bắt đầu bằng /households (VD: /households/add) -> Sáng menu Hộ khẩu
+    // Nếu đang ở bất kỳ trang nào bắt đầu bằng /households -> Sáng menu Hộ khẩu
     if (path.startsWith('/households')) return '/households';
     
     // Tương tự cho Phí và Hóa đơn
@@ -46,7 +49,6 @@ const MainLayout = ({ children }) => {
     // Mặc định là trang chủ
     return '/';
   };
-  // -----------------------------
 
   const menuItems = [
     {
@@ -80,7 +82,6 @@ const MainLayout = ({ children }) => {
         <Menu 
           theme="dark" 
           mode="inline" 
-          // Gọi hàm getActiveKey() để lấy key chính xác mỗi khi URL thay đổi
           selectedKeys={[getActiveKey()]} 
           items={menuItems} 
         />
@@ -128,10 +129,16 @@ function App() {
         <Route path="/households/add" element={<PrivateRoute><AddHousehold /></PrivateRoute>} />
         <Route path="/households/edit/:id" element={<PrivateRoute><EditHousehold /></PrivateRoute>} />
 
-        {/* QUẢN LÝ PHÍ & HÓA ĐƠN */}
+        {/* QUẢN LÝ PHÍ */}
         <Route path="/fees" element={<PrivateRoute><FeeList /></PrivateRoute>} />
-        <Route path="/bills" element={<PrivateRoute><BillList /></PrivateRoute>} />
+        {/* --- [MỚI] Thêm 2 route cho Phí --- */}
+        <Route path="/fees/add" element={<PrivateRoute><AddFee /></PrivateRoute>} />
+        <Route path="/fees/edit/:id" element={<PrivateRoute><EditFee /></PrivateRoute>} />
+        {/* ---------------------------------- */}
 
+        {/* QUẢN LÝ HÓA ĐƠN */}
+        <Route path="/bills" element={<PrivateRoute><BillList /></PrivateRoute>} />
+        
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
