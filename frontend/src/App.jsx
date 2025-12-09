@@ -1,31 +1,28 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, message } from 'antd';
-import {
-  FileTextOutlined,
-  DollarOutlined,
-  LogoutOutlined,
+import { 
+  FileTextOutlined, 
+  DollarOutlined, 
+  LogoutOutlined, 
   HomeOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined 
 } from '@ant-design/icons';
 
-// --- IMPORT CÁC MÀN HÌNH ---
+// --- IMPORT CÁC MÀN HÌNH (Đúng tên file bạn cung cấp) ---
 import LoginScreen from './pages/LoginScreen';
 import BillList from './pages/bill/BillList';
 import FeeList from './pages/fee/FeeList';
 import HouseholdList from './pages/household/HouseholdList';
-
-// !!! QUAN TRỌNG: Bạn cần đảm bảo đã tạo 2 file này trong thư mục pages/household
-// Nếu chưa có, hãy tạo file rỗng trước để không bị lỗi code
-import HouseholdAdd from './pages/household/AddHousehold';
-import HouseholdEdit from './pages/household/EditHousehold';
-// -----------------------------------------------------------------------
+import AddHousehold from './pages/household/AddHousehold';
+import EditHousehold from './pages/household/EditHousehold';
+// --------------------------------------------------------
 
 const { Header, Sider, Content } = Layout;
 
 // 1. Layout Chính
 const MainLayout = ({ children }) => {
-  const location = useLocation();
+  const location = useLocation(); // Lấy đường dẫn hiện tại
   const user = JSON.parse(localStorage.getItem('userInfo')) || { username: 'Admin' };
 
   const handleLogout = () => {
@@ -33,6 +30,23 @@ const MainLayout = ({ children }) => {
     message.success('Đã đăng xuất!');
     window.location.href = '/login';
   };
+
+  // --- SỬA LOGIC MENU TẠI ĐÂY ---
+  // Hàm xác định menu nào đang sáng dựa trên URL hiện tại
+  const getActiveKey = () => {
+    const path = location.pathname;
+
+    // Nếu đang ở bất kỳ trang nào bắt đầu bằng /households (VD: /households/add) -> Sáng menu Hộ khẩu
+    if (path.startsWith('/households')) return '/households';
+    
+    // Tương tự cho Phí và Hóa đơn
+    if (path.startsWith('/fees')) return '/fees';
+    if (path.startsWith('/bills')) return '/bills';
+    
+    // Mặc định là trang chủ
+    return '/';
+  };
+  // -----------------------------
 
   const menuItems = [
     {
@@ -57,26 +71,22 @@ const MainLayout = ({ children }) => {
     },
   ];
 
-  // Logic để highlight menu cha khi đang ở trang con (VD: đang ở /households/add vẫn sáng menu Hộ khẩu)
-  const selectedKey = menuItems.find(item => location.pathname.startsWith(item.key) && item.key !== '/')
-    ? menuItems.find(item => location.pathname.startsWith(item.key)).key
-    : '/';
-
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible theme="dark">
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', color: '#fff', lineHeight: '32px', fontWeight: 'bold' }}>
           BlueMoon
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[selectedKey]}
-          items={menuItems}
+        <Menu 
+          theme="dark" 
+          mode="inline" 
+          // Gọi hàm getActiveKey() để lấy key chính xác mỗi khi URL thay đổi
+          selectedKeys={[getActiveKey()]} 
+          items={menuItems} 
         />
       </Sider>
       <Layout className="site-layout">
-        <Header style={{ padding: '0 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,21,41,0.08)' }}>
+        <Header style={{ padding: '0 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0 }}>Hệ thống quản lý chung cư</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <span>Xin chào, <b>{user.username}</b></span>
@@ -95,7 +105,7 @@ const MainLayout = ({ children }) => {
   );
 };
 
-// 2. Bảo vệ Route
+// 2. Component bảo vệ
 const PrivateRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('userInfo'));
   return user ? <MainLayout>{children}</MainLayout> : <Navigate to="/login" />;
@@ -108,74 +118,21 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Route Login */}
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/" /> : <LoginScreen />}
-        />
+        <Route path="/login" element={user ? <Navigate to="/" /> : <LoginScreen />} />
 
-        {/* --- KHU VỰC CẦN ĐĂNG NHẬP --- */}
+        {/* --- CÁC ROUTE ĐƯỢC BẢO VỆ --- */}
+        <Route path="/" element={<PrivateRoute><h2>Trang Tổng quan</h2></PrivateRoute>} />
 
-        {/* Trang chủ */}
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <h2>Chào mừng đến với trang quản trị BlueMoon!</h2>
-              <p>Vui lòng chọn chức năng ở menu bên trái.</p>
-            </PrivateRoute>
-          }
-        />
+        {/* QUẢN LÝ HỘ KHẨU */}
+        <Route path="/households" element={<PrivateRoute><HouseholdList /></PrivateRoute>} />
+        <Route path="/households/add" element={<PrivateRoute><AddHousehold /></PrivateRoute>} />
+        <Route path="/households/edit/:id" element={<PrivateRoute><EditHousehold /></PrivateRoute>} />
 
-        {/* 1. Danh sách */}
-        <Route
-          path="/households"
-          element={
-            <PrivateRoute>
-              <HouseholdList />
-            </PrivateRoute>
-          }
-        />
-        {/* 2. Trang Thêm mới (Route con) */}
-        <Route
-          path="/households/add"
-          element={
-            <PrivateRoute>
-              <HouseholdAdd />
-            </PrivateRoute>
-          }
-        />
-        {/* 3. Trang Sửa (Route con có tham số id) */}
-        <Route
-          path="/households/edit/:id"
-          element={
-            <PrivateRoute>
-              <HouseholdEdit />
-            </PrivateRoute>
-          }
-        />
+        {/* QUẢN LÝ PHÍ & HÓA ĐƠN */}
+        <Route path="/fees" element={<PrivateRoute><FeeList /></PrivateRoute>} />
+        <Route path="/bills" element={<PrivateRoute><BillList /></PrivateRoute>} />
 
-        {/* === QUẢN LÝ PHÍ === */}
-        <Route
-          path="/fees"
-          element={
-            <PrivateRoute>
-              <FeeList />
-            </PrivateRoute>
-          }
-        />
-
-        {/* === QUẢN LÝ HÓA ĐƠN === */}
-        <Route
-          path="/bills"
-          element={
-            <PrivateRoute>
-              <BillList />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Catch-all: Đường dẫn lạ -> Về trang chủ */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
