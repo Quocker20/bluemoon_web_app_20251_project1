@@ -1,6 +1,6 @@
 // File: frontend/src/pages/household/HouseholdList.jsx
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar } from 'antd';
+import { Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar} from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -33,18 +33,23 @@ const HouseholdList = () => {
   const handleDelete = async (id) => {
     try {
       await axiosClient.delete(`/households/${id}`);
-      toast.success('Đã xóa thành công!');
+      
+      toast.success('Đã xóa hộ khẩu thành công!');
+      
       fetchHouseholds();
     } catch (error) {
-      toast.error('Lỗi khi xóa hộ khẩu');
+      const errorMessage = error.response && error.response.data && error.response.data.message
+        ? error.response.data.message
+        : 'Lỗi không xác định khi xóa.';
+
+      toast.error(errorMessage);
       console.log(error);
     }
   };
 
-  // Hàm mở Modal Xem chi tiết
   const handleViewDetail = (record) => {
-    setSelectedHousehold(record); // Lưu thông tin dòng đang chọn
-    setIsViewModalOpen(true);     // Mở Modal lên
+    setSelectedHousehold(record);
+    setIsViewModalOpen(true);
   };
 
   useEffect(() => {
@@ -56,34 +61,36 @@ const HouseholdList = () => {
       title: 'Số hộ khẩu',
       dataIndex: 'householdNumber',
       key: 'householdNumber',
+      width: '15%',
       render: (text) => <b>{text}</b>,
     },
     {
       title: 'Chủ hộ',
       dataIndex: 'ownerName',
       key: 'ownerName',
-    },
-    {
-      title: 'Địa chỉ',
-      dataIndex: 'address',
-      key: 'address',
+      width: '25%',
     },
     {
       title: 'Diện tích',
       dataIndex: 'area',
       key: 'area',
+      width: '15%',
       render: (area) => <Tag color="blue">{area} m²</Tag>,
     },
     {
       title: 'Nhân khẩu',
       key: 'members',
-      render: (_, record) => (
-        <span>{record.residents ? record.residents.length : 0} người</span>
-      ),
+      width: '15%',
+      render: (_, record) => {
+        // Cộng thêm 1 (chủ hộ) vào số lượng nhân khẩu
+        const totalMembers = (record.residents ? record.residents.length : 0) + 1;
+        return <span>{totalMembers} người</span>;
+      },
     },
     {
       title: 'Hành động',
       key: 'action',
+      width: '20%',
       render: (_, record) => (
         <Space size="middle">
           <Button
@@ -98,7 +105,6 @@ const HouseholdList = () => {
             type="primary"
             ghost
             size="small"
-            // --- SỬA DÒNG NÀY: Bỏ '/admin', sửa thành '/households/edit/...' ---
             onClick={() => navigate(`/households/edit/${record._id}`)}
           >
           </Button>
@@ -123,7 +129,6 @@ const HouseholdList = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          // --- SỬA DÒNG NÀY: Bỏ '/admin/households/new', sửa thành '/households/add' ---
           onClick={() => navigate('/households/add')}
         >
           Thêm hộ mới
@@ -138,7 +143,6 @@ const HouseholdList = () => {
         bordered
       />
 
-      {/* === MODAL XEM CHI TIẾT === */}
       <Modal
         title="Chi Tiết Hộ Khẩu"
         open={isViewModalOpen}
@@ -157,29 +161,43 @@ const HouseholdList = () => {
               <Descriptions.Item label="Diện tích">{selectedHousehold.area} m²</Descriptions.Item>
               <Descriptions.Item label="Chủ hộ">{selectedHousehold.ownerName}</Descriptions.Item>
               <Descriptions.Item label="SĐT Liên hệ">{selectedHousehold.phone}</Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ" span={2}>{selectedHousehold.address}</Descriptions.Item>
             </Descriptions>
 
-            <Title level={5} style={{ marginTop: 20 }}>Danh sách nhân khẩu ({selectedHousehold.residents?.length || 0})</Title>
+            <Title level={5} style={{ marginTop: 20 }}>Danh sách nhân khẩu ({(selectedHousehold.residents?.length || 0) + 1})</Title>
 
             <List
               itemLayout="horizontal"
-              dataSource={selectedHousehold.residents}
-              renderItem={(item) => (
-                <List.Item>
+            >
+               {/* Hiển thị Chủ hộ như một thành viên đầu tiên */}
+               <List.Item>
                   <List.Item.Meta
-                    avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#87d068' }} />}
-                    title={item.residentName}
+                    avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />}
+                    title={selectedHousehold.ownerName}
                     description={
                       <Space>
-                        <Tag color="blue">{item.relationToOwner}</Tag>
-                        <span>CCCD: {item.cccd || 'Chưa có'}</span>
+                        <Tag color="gold">Chủ hộ</Tag>
+                        <span>SĐT: {selectedHousehold.phone}</span>
                       </Space>
                     }
                   />
                 </List.Item>
-              )}
-            />
+
+                {/* Danh sách các thành viên khác */}
+                {selectedHousehold.residents?.map((item, index) => (
+                  <List.Item key={index}>
+                    <List.Item.Meta
+                      avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#87d068' }} />}
+                      title={item.residentName}
+                      description={
+                        <Space>
+                          <Tag color="blue">{item.relationToOwner}</Tag>
+                          <span>CCCD: {item.cccd || 'Chưa có'}</span>
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                ))}
+            </List>
           </div>
         )}
       </Modal>
