@@ -1,114 +1,149 @@
 // File: frontend/src/pages/household/AddHousehold.jsx
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, InputNumber, Space, Typography, Divider, Select } from 'antd';
-import { MinusCircleOutlined, PlusOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, InputNumber, Space, Divider, Row, Col } from 'antd';
+import { SaveOutlined, ArrowLeftOutlined, MinusCircleOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import { toast } from 'react-toastify';
 
-const { Title } = Typography;
-const { Option } = Select;
-
 const AddHousehold = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [form] = Form.useForm();
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
       await axiosClient.post('/households', values);
-      toast.success('Thêm hộ khẩu thành công!');
+      toast.success('Thêm hộ khẩu mới thành công!');
       navigate('/households');
     } catch (error) {
-      toast.error('Lỗi: ' + (error.response?.data?.message || error.message));
+      const msg = error.response?.data?.message || 'Lỗi khi thêm mới';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card>
-      <div style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/households')}>
-          Quay lại
-        </Button>
-      </div>
-      
-      <Title level={3} style={{ textAlign: 'center' }}>Thêm Hộ Khẩu Mới</Title>
-
-      <Form layout="vertical" onFinish={onFinish} autoComplete="off">
-        {/* === THÔNG TIN CHUNG === */}
+    // THÊM style maxWidth và margin auto để co gọn form
+    <Card 
+      style={{ maxWidth: 800, margin: '0 auto', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+      title={
+        <Space>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/households')} />
+          <span>Thêm Hộ Khẩu Mới</span>
+        </Space>
+      }
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        initialValues={{ residents: [] }}
+      >
         <Divider orientation="left">Thông tin Hộ khẩu</Divider>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <Form.Item label="Số hộ khẩu" name="householdNumber" rules={[{ required: true, message: 'Nhập số sổ!' }]}>
-            <Input placeholder="VD: P101" />
-          </Form.Item>
-          
-          <Form.Item label="Tên chủ hộ" name="ownerName" rules={[{ required: true, message: 'Nhập tên chủ hộ!' }]}>
-            <Input placeholder="Nguyễn Văn A" />
-          </Form.Item>
+        
+        {/* Hàng 1: Số hộ khẩu - Diện tích */}
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="householdNumber"
+              label="Số hộ khẩu (Căn hộ)"
+              rules={[{ required: true, message: 'Vui lòng nhập số hộ khẩu' }]}
+            >
+              <Input placeholder="VD: A-101" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="area"
+              label="Diện tích (m²)"
+              rules={[{ required: true, message: 'Vui lòng nhập diện tích' }]}
+            >
+              <InputNumber style={{ width: '100%' }} min={0} />
+            </Form.Item>
+          </Col>
+        </Row>
 
-          {/* ĐÃ THÊM: SỐ ĐIỆN THOẠI (BẮT BUỘC THEO MODEL) */}
-          <Form.Item label="Số điện thoại" name="phone" rules={[{ required: true, message: 'Nhập SĐT liên hệ!' }]}>
-            <Input placeholder="0988xxxxxx" />
-          </Form.Item>
+        {/* Hàng 2: Tên Chủ hộ (Full dòng) */}
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              name="ownerName"
+              label="Tên Chủ hộ"
+              rules={[{ required: true, message: 'Vui lòng nhập tên chủ hộ' }]}
+            >
+              <Input prefix={<UserOutlined />} placeholder="Nhập họ và tên chủ hộ" />
+            </Form.Item>
+          </Col>
+        </Row>
 
-          <Form.Item label="Diện tích (m2)" name="area" rules={[{ required: true, message: 'Nhập diện tích!' }]}>
-            <InputNumber style={{ width: '100%' }} min={1} placeholder="VD: 70" />
-          </Form.Item>
+        {/* Hàng 3: CCCD - SĐT */}
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="ownerCCCD"
+              label="CCCD/CMND Chủ hộ"
+              rules={[{ required: true, message: 'Vui lòng nhập CCCD chủ hộ' }]}
+            >
+              <Input placeholder="Nhập số thẻ căn cước" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+             <Form.Item
+              name="phone"
+              label="Số điện thoại liên hệ"
+              rules={[{ required: true, message: 'Vui lòng nhập SĐT' }]}
+            >
+              <Input placeholder="Nhập số điện thoại" />
+            </Form.Item>
+          </Col>
+        </Row>
 
-           {/* ĐÃ THÊM: ĐỊA CHỈ (NẾU MODEL CẦN, TẠM THỜI ĐỂ OPTIONAL HOẶC REQUIRED TÙY BẠN) */}
-           {/* Nếu model không bắt buộc address thì có thể bỏ qua, nhưng thường UI nên có */}
-        </div>
-
-        {/* === DANH SÁCH NHÂN KHẨU (FORM ĐỘNG) === */}
-        <Divider orientation="left">Danh sách Nhân khẩu</Divider>
+        <Divider orientation="left">Danh sách Nhân khẩu đi kèm</Divider>
         <Form.List name="residents">
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
-                <Space key={key} style={{ display: 'flex', marginBottom: 8, borderBottom: '1px dashed #ccc', paddingBottom: 8 }} align="baseline">
-                  {/* SỬA: name -> residentName */}
+                <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
                   <Form.Item
                     {...restField}
                     name={[name, 'residentName']}
-                    rules={[{ required: true, message: 'Thiếu tên' }]}
+                    rules={[{ required: true, message: 'Nhập tên' }]}
                   >
-                    <Input placeholder="Họ và tên" />
+                    <Input placeholder="Họ tên thành viên" />
                   </Form.Item>
 
-                   {/* SỬA: identityCard -> cccd */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'cccd']}
-                  >
-                    <Input placeholder="CCCD/CMND" />
-                  </Form.Item>
-
-                  {/* THÊM: relationToOwner */}
                   <Form.Item
                     {...restField}
                     name={[name, 'relationToOwner']}
                     rules={[{ required: true, message: 'Nhập quan hệ' }]}
-                    style={{ minWidth: 120 }}
                   >
-                    <Input placeholder="Quan hệ (Vợ/Con...)" />
+                    <Input placeholder="Quan hệ (VD: Con, Vợ)" />
                   </Form.Item>
 
-                  <MinusCircleOutlined onClick={() => remove(name)} style={{ color: 'red' }} />
+                  <Form.Item
+                    {...restField}
+                    name={[name, 'cccd']}
+                  >
+                    <Input placeholder="CCCD (nếu có)" />
+                  </Form.Item>
+
+                  <MinusCircleOutlined onClick={() => remove(name)} />
                 </Space>
               ))}
               <Form.Item>
                 <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  Thêm thành viên
+                  Thêm nhân khẩu
                 </Button>
               </Form.Item>
             </>
           )}
         </Form.List>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading} block>
+        <Form.Item style={{ marginTop: 20, textAlign: 'right' }}>
+          <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
             Lưu Hộ Khẩu
           </Button>
         </Form.Item>
