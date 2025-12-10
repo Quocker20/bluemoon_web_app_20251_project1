@@ -1,9 +1,7 @@
 // File: backend/models/HouseholdModel.js
-
 const mongoose = require('mongoose');
 
 // 1. Định nghĩa Schema con: Nhân khẩu (Resident)
-// (Schema này sẽ được NHÚNG vào bên trong Household, không đứng riêng)
 const residentSchema = new mongoose.Schema({
   residentName: {
     type: String,
@@ -11,12 +9,9 @@ const residentSchema = new mongoose.Schema({
   },
   dob: {
     type: Date,
-    // required: true, // Tạm thời để optional để dễ test
   },
   cccd: {
     type: String,
-    // sparse: true cho phép nhiều giá trị null (trẻ em không có CCCD)
-    // nhưng nếu có giá trị thì phải là duy nhất.
     unique: true, 
     sparse: true, 
   },
@@ -31,11 +26,17 @@ const householdSchema = new mongoose.Schema({
   householdNumber: {
     type: String,
     required: [true, 'Vui lòng nhập số căn hộ (ví dụ: A-101)'],
-    unique: true, // Số căn hộ không được trùng
+    unique: true,
   },
   ownerName: {
     type: String,
     required: [true, 'Vui lòng nhập tên chủ hộ'],
+  },
+  // [MỚI] Thêm CCCD Chủ hộ (Bắt buộc)
+  ownerCCCD: {
+    type: String,
+    required: [true, 'Vui lòng nhập CCCD chủ hộ'],
+    unique: true,
   },
   phone: {
     type: String,
@@ -45,7 +46,6 @@ const householdSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Vui lòng nhập diện tích căn hộ'],
   },
-  // Mảng nhúng chứa các Nhân khẩu
   residents: [residentSchema] 
 }, {
   timestamps: true

@@ -6,7 +6,8 @@ const Bill = require('../models/BillModel'); // [QUAN TRỌNG] Import Model Bill
 // @route   POST /api/households
 const createHousehold = async (req, res) => {
   try {
-    const { householdNumber, ownerName, phone, area, residents } = req.body;
+    // [MỚI] Thêm ownerCCCD vào destructuring
+    const { householdNumber, ownerName, ownerCCCD, phone, area, residents } = req.body;
 
     // Kiểm tra trùng lặp số căn hộ
     const householdExists = await Household.findOne({ householdNumber });
@@ -14,9 +15,16 @@ const createHousehold = async (req, res) => {
       return res.status(400).json({ message: 'Số căn hộ đã tồn tại' });
     }
 
+    // Kiểm tra trùng CCCD chủ hộ
+    const cccdExists = await Household.findOne({ ownerCCCD });
+    if (cccdExists) {
+      return res.status(400).json({ message: 'CCCD chủ hộ đã tồn tại trong hệ thống' });
+    }
+
     const household = await Household.create({
       householdNumber,
       ownerName,
+      ownerCCCD, // [MỚI] Lưu CCCD chủ hộ
       phone,
       area,
       residents: residents || [] 
@@ -60,7 +68,6 @@ const updateHousehold = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Kiểm tra tồn tại
     const household = await Household.findById(id);
     if (!household) {
       return res.status(404).json({ message: 'Không tìm thấy hộ khẩu' });
@@ -79,7 +86,7 @@ const updateHousehold = async (req, res) => {
   }
 };
 
-// --- [SỬA LẠI] Xóa hộ khẩu (Kiểm tra nợ trước khi xóa) ---
+// @desc    Xóa hộ khẩu (Kiểm tra nợ trước khi xóa)
 // @route   DELETE /api/households/:id
 const deleteHousehold = async (req, res) => {
   try {

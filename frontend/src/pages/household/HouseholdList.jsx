@@ -1,6 +1,5 @@
-// File: frontend/src/pages/household/HouseholdList.jsx
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar} from 'antd';
+import { Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -33,15 +32,12 @@ const HouseholdList = () => {
   const handleDelete = async (id) => {
     try {
       await axiosClient.delete(`/households/${id}`);
-      
       toast.success('Đã xóa hộ khẩu thành công!');
-      
       fetchHouseholds();
     } catch (error) {
       const errorMessage = error.response && error.response.data && error.response.data.message
         ? error.response.data.message
         : 'Lỗi không xác định khi xóa.';
-
       toast.error(errorMessage);
       console.log(error);
     }
@@ -68,13 +64,23 @@ const HouseholdList = () => {
       title: 'Chủ hộ',
       dataIndex: 'ownerName',
       key: 'ownerName',
-      width: '25%',
+      width: '20%', 
+      render: (text) => <span style={{ fontWeight: 500 }}>{text}</span>
     },
+    // --- [MỚI] THÊM CỘT CCCD RIÊNG BIỆT ---
+    {
+      title: 'CCCD Chủ hộ',
+      dataIndex: 'ownerCCCD',
+      key: 'ownerCCCD',
+      width: '15%',
+      render: (text) => <span style={{ color: '#1890ff', fontWeight: 500 }}>{text || '---'}</span>
+    },
+    // ---------------------------------------
     {
       title: 'Diện tích',
       dataIndex: 'area',
       key: 'area',
-      width: '15%',
+      width: '10%',
       render: (area) => <Tag color="blue">{area} m²</Tag>,
     },
     {
@@ -90,9 +96,9 @@ const HouseholdList = () => {
     {
       title: 'Hành động',
       key: 'action',
-      width: '20%',
+      width: '25%',
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="small">
           <Button
             icon={<EyeOutlined />}
             size="small"
@@ -160,6 +166,9 @@ const HouseholdList = () => {
               <Descriptions.Item label="Số hộ khẩu"><b>{selectedHousehold.householdNumber}</b></Descriptions.Item>
               <Descriptions.Item label="Diện tích">{selectedHousehold.area} m²</Descriptions.Item>
               <Descriptions.Item label="Chủ hộ">{selectedHousehold.ownerName}</Descriptions.Item>
+              <Descriptions.Item label="CCCD Chủ hộ">
+                 <b style={{ color: '#1890ff' }}>{selectedHousehold.ownerCCCD}</b>
+              </Descriptions.Item>
               <Descriptions.Item label="SĐT Liên hệ">{selectedHousehold.phone}</Descriptions.Item>
             </Descriptions>
 
@@ -168,7 +177,7 @@ const HouseholdList = () => {
             <List
               itemLayout="horizontal"
             >
-               {/* Hiển thị Chủ hộ như một thành viên đầu tiên */}
+               {/* Hiển thị Chủ hộ */}
                <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />}
@@ -176,13 +185,13 @@ const HouseholdList = () => {
                     description={
                       <Space>
                         <Tag color="gold">Chủ hộ</Tag>
-                        <span>SĐT: {selectedHousehold.phone}</span>
+                        <span>CCCD: {selectedHousehold.ownerCCCD}</span>
                       </Space>
                     }
                   />
                 </List.Item>
 
-                {/* Danh sách các thành viên khác */}
+                {/* Danh sách thành viên */}
                 {selectedHousehold.residents?.map((item, index) => (
                   <List.Item key={index}>
                     <List.Item.Meta
