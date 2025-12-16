@@ -6,7 +6,7 @@ const Bill = require('../models/BillModel'); // [QUAN TRỌNG] Import Model Bill
 // @route   POST /api/households
 const createHousehold = async (req, res) => {
   try {
-    // [MỚI] Thêm ownerCCCD vào destructuring
+    // Thêm ownerCCCD vào destructuring
     const { householdNumber, ownerName, ownerCCCD, phone, area, residents } = req.body;
 
     // Kiểm tra trùng lặp số căn hộ
@@ -24,7 +24,7 @@ const createHousehold = async (req, res) => {
     const household = await Household.create({
       householdNumber,
       ownerName,
-      ownerCCCD, // [MỚI] Lưu CCCD chủ hộ
+      ownerCCCD,
       phone,
       area,
       residents: residents || [] 
