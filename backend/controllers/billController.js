@@ -2,7 +2,6 @@ const Bill = require('../models/BillModel');
 const Fee = require('../models/FeeModel');
 const Household = require('../models/HouseholdModel');
 
-// 1. Tạo hóa đơn hàng loạt (GIỮ NGUYÊN)
 const generateAllMonthlyBills = async (req, res) => {
   const { month, year } = req.body;
   if (!month || !year) return res.status(400).json({ message: 'Thiếu tháng/năm' });
@@ -47,20 +46,31 @@ const generateAllMonthlyBills = async (req, res) => {
   }
 };
 
-// 2. Lấy danh sách hóa đơn (GIỮ NGUYÊN)
 const getBills = async (req, res) => {
   try {
-    const bills = await Bill.find().populate('household', 'householdNumber ownerName').sort({ createdAt: -1 });
+    let query = {};
+
+    if (req.query.keyword) {
+      const households = await Household.find({
+        householdNumber: { $regex: req.query.keyword, $options: 'i' }
+      }).select('_id');
+
+      const householdIds = households.map(h => h._id);
+      query = { household: { $in: householdIds } };
+    }
+
+    const bills = await Bill.find(query)
+      .populate('household', 'householdNumber ownerName')
+      .sort({ createdAt: -1 });
+
     res.json(bills);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// --- [MỚI] 3. Lấy chi tiết 1 hóa đơn (Cho màn hình thanh toán) ---
 const getBillById = async (req, res) => {
   try {
-    // Populate để lấy tên chủ hộ, số phòng hiển thị cho rõ
     const bill = await Bill.findById(req.params.id).populate('household', 'householdNumber ownerName');
     if (!bill) return res.status(404).json({ message: 'Không tìm thấy hóa đơn' });
     res.json(bill);
@@ -69,7 +79,6 @@ const getBillById = async (req, res) => {
   }
 };
 
-// --- [MỚI] 4. Xác nhận thanh toán ---
 const payBill = async (req, res) => {
   try {
     const bill = await Bill.findById(req.params.id);
@@ -79,7 +88,6 @@ const payBill = async (req, res) => {
       return res.status(400).json({ message: 'Hóa đơn này đã thanh toán rồi!' });
     }
 
-    // Cập nhật trạng thái
     bill.status = 'Paid';
     await bill.save();
 
@@ -89,7 +97,6 @@ const payBill = async (req, res) => {
   }
 };
 
-// XUẤT ĐỦ 4 HÀM
 module.exports = { 
   generateAllMonthlyBills, 
   getBills,

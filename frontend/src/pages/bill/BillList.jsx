@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from 'react';
-// Thêm useNavigate vào import
-import { Table, Card, Tag, Button, Modal, Form, InputNumber, message, Space, Typography } from 'antd';
-import { PlusOutlined, ReloadOutlined, DollarOutlined } from '@ant-design/icons'; // Thêm DollarOutlined
+import { Table, Card, Tag, Button, Modal, Form, InputNumber, message, Space, Typography, Input } from 'antd';
+import { PlusOutlined, ReloadOutlined, DollarOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Thêm hook chuyển trang
+import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
+const { Search } = Input;
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // Khởi tạo hook
+  const navigate = useNavigate();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form] = Form.useForm();
 
-  // Hàm fetchBills (GIỮ NGUYÊN)
-  const fetchBills = async () => {
+  const fetchBills = async (keyword = '') => {
     setLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/bills');
+      const { data } = await axios.get('http://localhost:5000/api/bills', {
+        params: { keyword }
+      });
       setBills(data);
     } catch (error) {
       console.error("Lỗi tải hóa đơn:", error);
@@ -33,7 +34,6 @@ const BillList = () => {
     fetchBills();
   }, []);
 
-  // Hàm handleGenerateBills (GIỮ NGUYÊN)
   const handleGenerateBills = async (values) => {
     setCreating(true);
     try {
@@ -51,7 +51,6 @@ const BillList = () => {
     }
   };
 
-  // expandedRowRender (GIỮ NGUYÊN)
   const expandedRowRender = (record) => {
     const detailColumns = [
       { title: 'Khoản phí', dataIndex: 'feeName', key: 'feeName' },
@@ -109,7 +108,6 @@ const BillList = () => {
         ? <Tag color="green">Đã đóng</Tag> 
         : <Tag color="orange">Chưa đóng</Tag>
     },
-    // --- [MỚI] CỘT THAO TÁC ---
     {
       title: 'Thao tác',
       key: 'action',
@@ -133,7 +131,14 @@ const BillList = () => {
       title="Danh sách Hóa đơn" 
       extra={
         <Space>
-          <Button icon={<ReloadOutlined />} onClick={fetchBills}>Làm mới</Button>
+          <Search
+            placeholder="Tìm theo số căn hộ..."
+            onSearch={(value) => fetchBills(value)}
+            allowClear
+            enterButton
+            style={{ width: 250 }}
+          />
+          <Button icon={<ReloadOutlined />} onClick={() => fetchBills()}>Làm mới</Button>
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
