@@ -1,9 +1,11 @@
+// File: frontend/src/pages/household/HouseholdList.jsx
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar } from 'antd';
+import { message, Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import { toast } from 'react-toastify';
+
 
 const { Title } = Typography;
 
@@ -32,14 +34,14 @@ const HouseholdList = () => {
   const handleDelete = async (id) => {
     try {
       await axiosClient.delete(`/households/${id}`);
-      toast.success('Đã xóa hộ khẩu thành công!');
+      message.success('Đã xóa hộ khẩu thành công!');
       fetchHouseholds();
     } catch (error) {
-      const errorMessage = error.response && error.response.data && error.response.data.message
-        ? error.response.data.message
-        : 'Lỗi không xác định khi xóa.';
-      toast.error(errorMessage);
       console.log(error);
+      setTimeout(() => {
+        message.error('Xóa thất bại, kiểm tra công nợ của hộ khẩu!');
+      }, 0);
+
     }
   };
 
@@ -64,10 +66,9 @@ const HouseholdList = () => {
       title: 'Chủ hộ',
       dataIndex: 'ownerName',
       key: 'ownerName',
-      width: '20%', 
+      width: '20%',
       render: (text) => <span style={{ fontWeight: 500 }}>{text}</span>
     },
-    // --- [MỚI] THÊM CỘT CCCD RIÊNG BIỆT ---
     {
       title: 'CCCD Chủ hộ',
       dataIndex: 'ownerCCCD',
@@ -75,7 +76,6 @@ const HouseholdList = () => {
       width: '15%',
       render: (text) => <span style={{ color: '#1890ff', fontWeight: 500 }}>{text || '---'}</span>
     },
-    // ---------------------------------------
     {
       title: 'Diện tích',
       dataIndex: 'area',
@@ -88,7 +88,6 @@ const HouseholdList = () => {
       key: 'members',
       width: '15%',
       render: (_, record) => {
-        // Cộng thêm 1 (chủ hộ) vào số lượng nhân khẩu
         const totalMembers = (record.residents ? record.residents.length : 0) + 1;
         return <span>{totalMembers} người</span>;
       },
@@ -167,7 +166,7 @@ const HouseholdList = () => {
               <Descriptions.Item label="Diện tích">{selectedHousehold.area} m²</Descriptions.Item>
               <Descriptions.Item label="Chủ hộ">{selectedHousehold.ownerName}</Descriptions.Item>
               <Descriptions.Item label="CCCD Chủ hộ">
-                 <b style={{ color: '#1890ff' }}>{selectedHousehold.ownerCCCD}</b>
+                <b style={{ color: '#1890ff' }}>{selectedHousehold.ownerCCCD}</b>
               </Descriptions.Item>
               <Descriptions.Item label="SĐT Liên hệ">{selectedHousehold.phone}</Descriptions.Item>
             </Descriptions>
@@ -177,35 +176,33 @@ const HouseholdList = () => {
             <List
               itemLayout="horizontal"
             >
-               {/* Hiển thị Chủ hộ */}
-               <List.Item>
+              <List.Item>
+                <List.Item.Meta
+                  avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />}
+                  title={selectedHousehold.ownerName}
+                  description={
+                    <Space>
+                      <Tag color="gold">Chủ hộ</Tag>
+                      <span>CCCD: {selectedHousehold.ownerCCCD}</span>
+                    </Space>
+                  }
+                />
+              </List.Item>
+
+              {selectedHousehold.residents?.map((item, index) => (
+                <List.Item key={index}>
                   <List.Item.Meta
-                    avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />}
-                    title={selectedHousehold.ownerName}
+                    avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#87d068' }} />}
+                    title={item.residentName}
                     description={
                       <Space>
-                        <Tag color="gold">Chủ hộ</Tag>
-                        <span>CCCD: {selectedHousehold.ownerCCCD}</span>
+                        <Tag color="blue">{item.relationToOwner}</Tag>
+                        <span>CCCD: {item.cccd || 'Chưa có'}</span>
                       </Space>
                     }
                   />
                 </List.Item>
-
-                {/* Danh sách thành viên */}
-                {selectedHousehold.residents?.map((item, index) => (
-                  <List.Item key={index}>
-                    <List.Item.Meta
-                      avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#87d068' }} />}
-                      title={item.residentName}
-                      description={
-                        <Space>
-                          <Tag color="blue">{item.relationToOwner}</Tag>
-                          <span>CCCD: {item.cccd || 'Chưa có'}</span>
-                        </Space>
-                      }
-                    />
-                  </List.Item>
-                ))}
+              ))}
             </List>
           </div>
         )}
