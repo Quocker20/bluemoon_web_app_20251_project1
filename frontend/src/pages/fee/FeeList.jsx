@@ -1,20 +1,22 @@
-// File: src/pages/fee/FeeList.jsx
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Tag, Button, Space, Popconfirm, message } from 'antd'; // Thêm các component UI
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'; // Thêm Icon
+import { Table, Card, Tag, Button, Space, Popconfirm, message, Input } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
+const { Search } = Input;
 
 const FeeList = () => {
   const [fees, setFees] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 1. Tách hàm fetch ra ngoài để tái sử dụng sau khi Xóa
-  const fetchFees = async () => {
+  const fetchFees = async (keyword = '') => {
     setLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/fees');
+      const { data } = await axios.get('http://localhost:5000/api/fees', {
+        params: { keyword }
+      });
       setFees(data);
     } catch (error) {
       console.error("Lỗi tải phí:", error);
@@ -28,12 +30,11 @@ const FeeList = () => {
     fetchFees();
   }, []);
 
-  // 2. Hàm xử lý Xóa
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/api/fees/${id}`);
       message.success('Đã xóa khoản phí');
-      fetchFees(); // Load lại danh sách ngay sau khi xóa
+      fetchFees();
     } catch (error) {
       console.error(error);
       message.error('Lỗi khi xóa phí');
@@ -50,13 +51,11 @@ const FeeList = () => {
       key: 'isMandatory', 
       render: (isMan) => isMan ? <Tag color="red">Bắt buộc</Tag> : <Tag color="green">Tự nguyện</Tag> 
     },
-    // --- CỘT HÀNH ĐỘNG (Giống bên Hộ khẩu) ---
     {
       title: 'Hành động',
       key: 'action',
       render: (_, record) => (
         <Space size="small">
-          {/* Nút Sửa */}
           <Button 
             type="primary" 
             ghost 
@@ -65,7 +64,6 @@ const FeeList = () => {
             onClick={() => navigate(`/fees/edit/${record._id}`)}
           />
 
-          {/* Nút Xóa có xác nhận */}
           <Popconfirm 
             title="Bạn chắc chắn muốn xóa phí này?" 
             onConfirm={() => handleDelete(record._id)}
@@ -87,15 +85,23 @@ const FeeList = () => {
   return (
     <Card 
       title="Danh sách Phí dịch vụ"
-      // --- NÚT THÊM MỚI ---
       extra={
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={() => navigate('/fees/add')}
-        >
-          Thêm phí mới
-        </Button>
+        <Space>
+          <Search
+            placeholder="Tìm tên khoản phí..."
+            onSearch={(value) => fetchFees(value)}
+            allowClear
+            enterButton
+            style={{ width: 250 }}
+          />
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            onClick={() => navigate('/fees/add')}
+          >
+            Thêm phí mới
+          </Button>
+        </Space>
       }
     >
       <Table 

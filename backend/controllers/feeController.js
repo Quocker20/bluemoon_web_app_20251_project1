@@ -1,16 +1,23 @@
 const Fee = require('../models/FeeModel');
 
-// 1. Lấy danh sách phí
 const getFees = async (req, res) => {
   try {
-    const fees = await Fee.find({});
+    const keyword = req.query.keyword
+      ? {
+          name: {
+            $regex: req.query.keyword,
+            $options: 'i',
+          },
+        }
+      : {};
+
+    const fees = await Fee.find({ ...keyword });
     res.json(fees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// --- [MỚI] 2. Lấy chi tiết 1 khoản phí (Cho trang Edit) ---
 const getFeeById = async (req, res) => {
   try {
     const fee = await Fee.findById(req.params.id);
@@ -24,7 +31,6 @@ const getFeeById = async (req, res) => {
   }
 };
 
-// 3. Tạo phí mới
 const createFee = async (req, res) => {
   try {
     const { name, unitPrice, calculationUnit, description, isMandatory, isActive } = req.body;
@@ -35,7 +41,6 @@ const createFee = async (req, res) => {
   }
 };
 
-// --- [MỚI] 4. Cập nhật khoản phí ---
 const updateFee = async (req, res) => {
   try {
     const { name, unitPrice, calculationUnit, description, isMandatory, isActive } = req.body;
@@ -59,7 +64,6 @@ const updateFee = async (req, res) => {
   }
 };
 
-// 5. Xóa phí
 const deleteFee = async (req, res) => {
   try {
     const fee = await Fee.findById(req.params.id);
@@ -74,7 +78,6 @@ const deleteFee = async (req, res) => {
   }
 };
 
-// QUAN TRỌNG: Phải export đủ 5 hàm này
 module.exports = { 
   getFees, 
   getFeeById, 
