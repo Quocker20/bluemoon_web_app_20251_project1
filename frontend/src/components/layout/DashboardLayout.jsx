@@ -2,20 +2,22 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { HomeOutlined, DollarOutlined, FileTextOutlined, BarChartOutlined } from '@ant-design/icons';
+import { HomeOutlined, DollarOutlined, FileTextOutlined, BarChartOutlined, DashboardOutlined } from '@ant-design/icons';
 
 const { Header, Content, Sider } = Layout;
 
 const DashboardLayout = () => {
     const location = useLocation();
 
-    // Xác định menu nào đang được chọn dựa trên URL hiện tại
+    // Sửa logic xác định menu active
     const getSelectedKey = () => {
-        if (location.pathname.includes('/admin/households')) return '1';
-        if (location.pathname.includes('/admin/fees')) return '2';
-        if (location.pathname.includes('/admin/bills')) return '3'; // Key mới cho Bills
-        if (location.pathname.includes('/admin/reports')) return '4';
-        return '1';
+        const path = location.pathname;
+        if (path === '/') return '0'; // Dashboard
+        if (path.startsWith('/households')) return '1';
+        if (path.startsWith('/fees')) return '2';
+        if (path.startsWith('/bills')) return '3';
+        if (path.startsWith('/reports')) return '4';
+        return '0';
     };
 
     return (
@@ -25,25 +27,33 @@ const DashboardLayout = () => {
                     BLUEMOON ADMIN
                 </div>
                 <Menu theme="dark" selectedKeys={[getSelectedKey()]} mode="inline">
+                    {/* Thêm menu về Trang chủ */}
+                    <Menu.Item key="0" icon={<DashboardOutlined />}>
+                        <Link to="/">Tổng quan</Link>
+                    </Menu.Item>
+
                     <Menu.Item key="1" icon={<HomeOutlined />}>
-                        <Link to="/admin/households">Quản lý Hộ khẩu</Link>
+                        <Link to="/households">Quản lý Hộ khẩu</Link> 
                     </Menu.Item>
+                    
                     <Menu.Item key="2" icon={<DollarOutlined />}>
-                        <Link to="/admin/fees">Quản lý Khoản thu</Link>
+                        <Link to="/fees">Quản lý Khoản thu</Link> 
                     </Menu.Item>
-                    {/* MENU MỚI */}
+                    
                     <Menu.Item key="3" icon={<FileTextOutlined />}>
-                        <Link to="/admin/bills">Quản lý Hóa đơn</Link>
+                        <Link to="/bills">Quản lý Hóa đơn</Link> 
                     </Menu.Item>
+                    
                     <Menu.Item key="4" icon={<BarChartOutlined />}>
-                         <Link to="/admin/reports">Báo cáo thống kê</Link>
+                         <Link to="/reports">Báo cáo thống kê</Link> 
                     </Menu.Item>
                 </Menu>
             </Sider>
             <Layout className="site-layout">
+                {/* Header để trống hoặc thêm Breadcrumb nếu muốn */}
                 <Header style={{ padding: 0, background: '#fff' }} />
                 <Content style={{ margin: '24px 16px' }}>
-                    <div style={{ padding: 24, minHeight: 360, background: '#fff' }}>
+                    <div style={{ padding: 24, minHeight: 360, background: '#fff', borderRadius: '8px' }}>
                         <Outlet /> 
                     </div>
                 </Content>
