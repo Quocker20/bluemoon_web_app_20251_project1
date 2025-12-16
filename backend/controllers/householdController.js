@@ -1,21 +1,15 @@
-// File: backend/controllers/householdController.js
 const Household = require('../models/HouseholdModel');
-const Bill = require('../models/BillModel'); // [QUAN TRỌNG] Import Model Bill để kiểm tra nợ
+const Bill = require('../models/BillModel');
 
-// @desc    Tạo hộ khẩu mới
-// @route   POST /api/households
 const createHousehold = async (req, res) => {
   try {
-    // Thêm ownerCCCD vào destructuring
     const { householdNumber, ownerName, ownerCCCD, phone, area, residents } = req.body;
 
-    // Kiểm tra trùng lặp số căn hộ
     const householdExists = await Household.findOne({ householdNumber });
     if (householdExists) {
       return res.status(400).json({ message: 'Số căn hộ đã tồn tại' });
     }
 
-    // Kiểm tra trùng CCCD chủ hộ
     const cccdExists = await Household.findOne({ ownerCCCD });
     if (cccdExists) {
       return res.status(400).json({ message: 'CCCD chủ hộ đã tồn tại trong hệ thống' });
@@ -36,19 +30,24 @@ const createHousehold = async (req, res) => {
   }
 };
 
-// @desc    Lấy danh sách tất cả hộ khẩu
-// @route   GET /api/households
 const getHouseholds = async (req, res) => {
   try {
-    const households = await Household.find({});
+    const keyword = req.query.keyword
+      ? {
+          householdNumber: {
+            $regex: req.query.keyword,
+            $options: 'i',
+          },
+        }
+      : {};
+
+    const households = await Household.find({ ...keyword });
     res.status(200).json(households);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Lấy chi tiết 1 hộ khẩu (kèm nhân khẩu)
-// @route   GET /api/households/:id
 const getHouseholdById = async (req, res) => {
   try {
     const household = await Household.findById(req.params.id);
@@ -62,8 +61,6 @@ const getHouseholdById = async (req, res) => {
   }
 };
 
-// @desc    Cập nhật thông tin hộ khẩu
-// @route   PUT /api/households/:id
 const updateHousehold = async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,8 +83,6 @@ const updateHousehold = async (req, res) => {
   }
 };
 
-// @desc    Xóa hộ khẩu (Kiểm tra nợ trước khi xóa)
-// @route   DELETE /api/households/:id
 const deleteHousehold = async (req, res) => {
   try {
     const householdId = req.params.id;
@@ -97,20 +92,17 @@ const deleteHousehold = async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy hộ khẩu' });
     }
 
-    // 1. Kiểm tra nợ xấu trong bảng Bill
     const hasUnpaidBills = await Bill.findOne({ 
       household: householdId, 
       status: 'Unpaid' 
     });
 
-    // 2. Nếu còn nợ -> Chặn xóa
     if (hasUnpaidBills) {
       return res.status(400).json({ 
         message: 'Không thể xóa! Hộ này vẫn còn hóa đơn chưa thanh toán. Vui lòng thanh toán hết công nợ trước khi xóa.' 
       });
     }
 
-    // 3. Nếu sạch nợ -> Cho phép xóa
     await household.deleteOne();
     res.status(200).json({ message: 'Đã xóa hộ khẩu thành công' });
 
@@ -119,8 +111,6 @@ const deleteHousehold = async (req, res) => {
   }
 };
 
-// @desc    Thêm nhân khẩu vào hộ
-// @route   POST /api/households/:id/residents
 const addResident = async (req, res) => {
     try {
         const household = await Household.findById(req.params.id);
@@ -136,8 +126,6 @@ const addResident = async (req, res) => {
     }
 };
 
-// @desc    Xóa nhân khẩu khỏi hộ
-// @route   DELETE /api/households/:id/residents/:residentId
 const deleteResident = async (req, res) => {
   try {
         const household = await Household.findById(req.params.id);

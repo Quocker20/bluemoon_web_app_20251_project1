@@ -1,27 +1,27 @@
-// File: frontend/src/pages/household/HouseholdList.jsx
 import React, { useEffect, useState } from 'react';
-import { message, Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar } from 'antd';
+import { message, Table, Button, Space, Typography, Tag, Popconfirm, Modal, Descriptions, List, Avatar, Input } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import { toast } from 'react-toastify';
 
-
 const { Title } = Typography;
+const { Search } = Input;
 
 const HouseholdList = () => {
   const [households, setHouseholds] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // State cho Modal Xem chi tiết
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedHousehold, setSelectedHousehold] = useState(null);
 
-  const fetchHouseholds = async () => {
+  const fetchHouseholds = async (keyword = '') => {
     setLoading(true);
     try {
-      const response = await axiosClient.get('/households');
+      const response = await axiosClient.get('/households', {
+        params: { keyword }
+      });
       setHouseholds(response.data);
     } catch (error) {
       toast.error('Lỗi khi tải danh sách');
@@ -41,7 +41,6 @@ const HouseholdList = () => {
       setTimeout(() => {
         message.error('Xóa thất bại, kiểm tra công nợ của hộ khẩu!');
       }, 0);
-
     }
   };
 
@@ -131,13 +130,22 @@ const HouseholdList = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Title level={3}>Quản lý Hộ khẩu</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate('/households/add')}
-        >
-          Thêm hộ mới
-        </Button>
+        <Space>
+          <Search
+            placeholder="Tìm theo số hộ khẩu..."
+            onSearch={(value) => fetchHouseholds(value)}
+            allowClear
+            enterButton
+            style={{ width: 300 }}
+          />
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/households/add')}
+          >
+            Thêm hộ mới
+          </Button>
+        </Space>
       </div>
 
       <Table
