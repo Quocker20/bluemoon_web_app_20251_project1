@@ -1,10 +1,8 @@
-// File: frontend/src/pages/household/AddHousehold.jsx
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, InputNumber, Space, Divider, Row, Col } from 'antd';
+import { Card, Form, Input, Button, InputNumber, Space, Divider, Row, Col, message } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, MinusCircleOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
-import { toast } from 'react-toastify';
 
 const AddHousehold = () => {
   const [loading, setLoading] = useState(false);
@@ -15,18 +13,17 @@ const AddHousehold = () => {
     setLoading(true);
     try {
       await axiosClient.post('/households', values);
-      toast.success('Thêm hộ khẩu mới thành công!');
+      message.success('Thêm hộ khẩu mới thành công!');
       navigate('/households');
     } catch (error) {
       const msg = error.response?.data?.message || 'Lỗi khi thêm mới';
-      toast.error(msg);
+      message.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    // THÊM style maxWidth và margin auto để co gọn form
     <Card 
       style={{ maxWidth: 800, margin: '0 auto', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
       title={
@@ -44,7 +41,6 @@ const AddHousehold = () => {
       >
         <Divider orientation="left">Thông tin Hộ khẩu</Divider>
         
-        {/* Hàng 1: Số hộ khẩu - Diện tích */}
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -66,7 +62,6 @@ const AddHousehold = () => {
           </Col>
         </Row>
 
-        {/* Hàng 2: Tên Chủ hộ (Full dòng) */}
         <Row gutter={16}>
           <Col span={24}>
             <Form.Item
@@ -79,7 +74,6 @@ const AddHousehold = () => {
           </Col>
         </Row>
 
-        {/* Hàng 3: CCCD - SĐT */}
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item

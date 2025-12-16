@@ -1,13 +1,20 @@
-// File: frontend/src/api/axiosClient.js
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:5000/api', // Địa chỉ Backend
+  baseURL: 'http://localhost:5000/api', 
   headers: {
     'Content-Type': 'application/json',
   },
-  // QUAN TRỌNG: Cho phép gửi/nhận Cookie (Token) giữa 2 domain khác nhau
   withCredentials: true, 
 });
+
+axiosClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default axiosClient;
