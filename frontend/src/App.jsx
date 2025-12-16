@@ -9,7 +9,6 @@ import {
   UsergroupAddOutlined
 } from '@ant-design/icons';
 
-// --- IMPORT CÁC MÀN HÌNH ---
 import LoginScreen from './pages/LoginScreen';
 import BillList from './pages/bill/BillList';
 import FeeList from './pages/fee/FeeList';
@@ -19,13 +18,12 @@ import EditHousehold from './pages/household/EditHousehold';
 import AddFee from './pages/fee/AddFee';
 import EditFee from './pages/fee/EditFee';
 import PaymentBill from './pages/bill/PaymentBill';
-// ------------------------------------------
+import Dashboard from './pages/Dashboard';
 
 const { Header, Sider, Content } = Layout;
 
-// 1. Layout Chính
 const MainLayout = ({ children }) => {
-  const location = useLocation(); // Lấy đường dẫn hiện tại
+  const location = useLocation();
   const user = JSON.parse(localStorage.getItem('userInfo')) || { username: 'Admin' };
 
   const handleLogout = () => {
@@ -34,18 +32,11 @@ const MainLayout = ({ children }) => {
     window.location.href = '/login';
   };
 
-  // Hàm xác định menu nào đang sáng dựa trên URL hiện tại
   const getActiveKey = () => {
     const path = location.pathname;
-
-    // Nếu đang ở bất kỳ trang nào bắt đầu bằng /households -> Sáng menu Hộ khẩu
     if (path.startsWith('/households')) return '/households';
-
-    // Tương tự cho Phí và Hóa đơn
     if (path.startsWith('/fees')) return '/fees';
     if (path.startsWith('/bills')) return '/bills';
-
-    // Mặc định là trang chủ
     return '/';
   };
 
@@ -105,13 +96,11 @@ const MainLayout = ({ children }) => {
   );
 };
 
-// 2. Component bảo vệ
 const PrivateRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('userInfo'));
   return user ? <MainLayout>{children}</MainLayout> : <Navigate to="/login" />;
 };
 
-// 3. App Component
 function App() {
   const user = JSON.parse(localStorage.getItem('userInfo'));
 
@@ -120,26 +109,19 @@ function App() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginScreen />} />
 
-        {/* --- CÁC ROUTE ĐƯỢC BẢO VỆ --- */}
-        <Route path="/" element={<PrivateRoute><h2>Trang Tổng quan</h2></PrivateRoute>} />
+        <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
 
-        {/* QUẢN LÝ HỘ KHẨU */}
         <Route path="/households" element={<PrivateRoute><HouseholdList /></PrivateRoute>} />
         <Route path="/households/add" element={<PrivateRoute><AddHousehold /></PrivateRoute>} />
         <Route path="/households/edit/:id" element={<PrivateRoute><EditHousehold /></PrivateRoute>} />
 
-        {/* QUẢN LÝ PHÍ */}
         <Route path="/fees" element={<PrivateRoute><FeeList /></PrivateRoute>} />
-        {/* --- [MỚI] Thêm 2 route cho Phí --- */}
         <Route path="/fees/add" element={<PrivateRoute><AddFee /></PrivateRoute>} />
         <Route path="/fees/edit/:id" element={<PrivateRoute><EditFee /></PrivateRoute>} />
-        {/* ---------------------------------- */}
 
-        {/* QUẢN LÝ HÓA ĐƠN */}
         <Route path="/bills" element={<PrivateRoute><BillList /></PrivateRoute>} />
         <Route path="/bills/pay/:id" element={<PrivateRoute><PaymentBill /></PrivateRoute>} />
 
-        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
