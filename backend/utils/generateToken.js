@@ -6,7 +6,7 @@ const generateToken = (res, userId, userRole) => {
   const token = jwt.sign(
     { userId, role: userRole }, // Nội dung (payload) của Token
     process.env.JWT_SECRET,    // Khóa bí mật (lấy từ .env)
-    { expiresIn: '30d' }       // Hết hạn sau 30 ngày
+    { expiresIn: '8h' }       // Hết hạn sau 30 ngày
   );
 
   // (Tùy chọn) Gửi Token qua HTTP-Only Cookie (Bảo mật hơn)
