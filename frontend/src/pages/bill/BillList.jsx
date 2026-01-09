@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Tag, Button, Modal, Form, InputNumber, message, Space, Typography, Input } from 'antd';
 import { PlusOutlined, ReloadOutlined, DollarOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
@@ -16,10 +16,13 @@ const BillList = () => {
   const [creating, setCreating] = useState(false);
   const [form] = Form.useForm();
 
+  // 1. Lấy thông tin User hiện tại từ LocalStorage để check quyền
+  const user = JSON.parse(localStorage.getItem('userInfo')) || {};
+
   const fetchBills = async (keyword = '') => {
     setLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/bills', {
+      const { data } = await axiosClient.get('/bills', {
         params: { keyword }
       });
       setBills(data);
@@ -37,7 +40,7 @@ const BillList = () => {
   const handleGenerateBills = async (values) => {
     setCreating(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/bills/generate', {
+      const res = await axiosClient.post('/bills/generate', {
         month: values.month,
         year: values.year
       });
@@ -112,7 +115,8 @@ const BillList = () => {
       title: 'Thao tác',
       key: 'action',
       render: (_, record) => (
-        record.status === 'Unpaid' && (
+        // Logic: Chỉ hiện nút Thu tiền nếu (Chưa thanh toán) VÀ (Là Admin)
+        record.status === 'Unpaid' && user.role === 'bqt_admin' && (
           <Button 
             type="primary" 
             size="small"
@@ -139,20 +143,24 @@ const BillList = () => {
             style={{ width: 250 }}
           />
           <Button icon={<ReloadOutlined />} onClick={() => fetchBills()}>Làm mới</Button>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={() => {
-              setIsModalOpen(true);
-              const now = new Date();
-              form.setFieldsValue({
-                month: now.getMonth() + 1,
-                year: now.getFullYear()
-              });
-            }}
-          >
-            Tính hóa đơn tháng mới
-          </Button>
+          
+          {/* Chỉ Admin mới được thấy nút "Tính hóa đơn tháng mới" */}
+          {user.role === 'bqt_admin' && (
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={() => {
+                setIsModalOpen(true);
+                const now = new Date();
+                form.setFieldsValue({
+                  month: now.getMonth() + 1,
+                  year: now.getFullYear()
+                });
+              }}
+            >
+              Tính hóa đơn tháng mới
+            </Button>
+          )}
         </Space>
       }
     >
