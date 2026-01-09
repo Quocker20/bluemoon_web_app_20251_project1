@@ -1,12 +1,16 @@
-import React from 'react';
+// File: frontend/src/App.jsx
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, message } from 'antd';
+import { Layout, Menu, Button, message, Dropdown, Avatar, Space } from 'antd';
 import {
   FileTextOutlined,
   DollarOutlined,
   LogoutOutlined,
   HomeOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
+  UserOutlined,
+  DownOutlined,
+  UserAddOutlined
 } from '@ant-design/icons';
 
 import LoginScreen from './pages/LoginScreen';
@@ -19,15 +23,23 @@ import AddFee from './pages/fee/AddFee';
 import EditFee from './pages/fee/EditFee';
 import PaymentBill from './pages/bill/PaymentBill';
 import Dashboard from './pages/Dashboard';
+// Import component Modal vừa tạo
+import RegisterModal from './components/RegisterModal';
 
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem('userInfo')) || { username: 'Admin' };
+  const user = JSON.parse(localStorage.getItem('userInfo')) || { username: 'Admin', role: 'guest' };
+  
+  // State quản lý việc hiển thị Modal Đăng ký
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
+    // Lưu ý: Token cookie httpOnly vẫn còn, nhưng without credentials hoặc 
+    // logic backend sẽ chặn nếu ta xóa client state. 
+    // Để sạch sẽ nhất, thường ta sẽ gọi 1 API /logout để xóa cookie (nếu cần).
     message.success('Đã đăng xuất!');
     window.location.href = '/login';
   };
@@ -40,7 +52,7 @@ const MainLayout = ({ children }) => {
     return '/';
   };
 
-  const menuItems = [
+  const sideMenuItems = [
     {
       key: '/',
       icon: <HomeOutlined />,
@@ -63,6 +75,27 @@ const MainLayout = ({ children }) => {
     },
   ];
 
+  // Định nghĩa menu cho Dropdown User
+  const userMenuItems = [
+    // Chỉ hiện nút Đăng ký nếu role là Admin
+    ...(user.role === 'bqt_admin' ? [{
+      key: 'register',
+      icon: <UserAddOutlined />,
+      label: 'Đăng ký tài khoản mới',
+      onClick: () => setIsRegisterModalOpen(true)
+    }] : []),
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: 'Đăng xuất',
+      danger: true,
+      onClick: handleLogout
+    }
+  ];
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible theme="dark">
@@ -73,17 +106,24 @@ const MainLayout = ({ children }) => {
           theme="dark"
           mode="inline"
           selectedKeys={[getActiveKey()]}
-          items={menuItems}
+          items={sideMenuItems}
         />
       </Sider>
       <Layout className="site-layout">
-        <Header style={{ padding: '0 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Header style={{ padding: '0 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,21,41,0.08)' }}>
           <h3 style={{ margin: 0 }}>Hệ thống quản lý chung cư</h3>
+          
+          {/* Thay nút Logout cũ bằng Dropdown Menu */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span>Xin chào, <b>{user.username}</b></span>
-            <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-              Đăng xuất
-            </Button>
+            <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
+              <Button type="text" style={{ height: 'auto', padding: '4px 8px' }}>
+                <Space>
+                  <Avatar style={{ backgroundColor: '#1890ff' }} icon={<UserOutlined />} />
+                  <span style={{ fontWeight: 500 }}>{user.username}</span>
+                  <DownOutlined style={{ fontSize: '10px' }} />
+                </Space>
+              </Button>
+            </Dropdown>
           </div>
         </Header>
         <Content style={{ margin: '16px' }}>
@@ -92,6 +132,12 @@ const MainLayout = ({ children }) => {
           </div>
         </Content>
       </Layout>
+
+      {/* Nhúng Modal Register vào đây */}
+      <RegisterModal 
+        open={isRegisterModalOpen} 
+        onClose={() => setIsRegisterModalOpen(false)} 
+      />
     </Layout>
   );
 };
