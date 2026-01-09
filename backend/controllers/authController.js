@@ -1,9 +1,9 @@
 // File: backend/controllers/authController.js
 
-const User = require('../models/UserModel'); // Import UserModel (Task 3)
+const User = require('../models/UserModel');
 const generateToken = require('../utils/generateToken');
 
-// @desc    Đăng ký user mới
+// @desc    Admin tạo user mới (Chỉ tạo, KHÔNG tự đăng nhập)
 // @route   POST /api/auth/register
 const registerUser = async (req, res) => {
   try {
@@ -16,7 +16,6 @@ const registerUser = async (req, res) => {
     }
 
     // 2. Tạo user mới
-    // (Mật khẩu sẽ tự động được băm (hash) nhờ 'pre-save hook' trong UserModel)
     const user = await User.create({
       username,
       password,
@@ -24,13 +23,14 @@ const registerUser = async (req, res) => {
       resident_id 
     });
 
-    // 3. Tạo Token và trả về
-    generateToken(res, user._id, user.role);
+    // --- QUAN TRỌNG: Đã xóa dòng generateToken ở đây ---
+    // Để không ghi đè cookie của Admin đang thao tác.
 
     res.status(201).json({
       _id: user._id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      message: 'Tạo tài khoản thành công!'
     });
 
   } catch (error) {
@@ -47,9 +47,9 @@ const loginUser = async (req, res) => {
     // 1. Tìm user bằng username
     const user = await User.findOne({ username });
 
-    // 2. Kiểm tra user và so sánh mật khẩu (dùng hàm matchPassword)
+    // 2. Kiểm tra user và so sánh mật khẩu
     if (user && (await user.matchPassword(password))) {
-      // 3. Tạo Token và trả về
+      // 3. Tạo Token và lưu vào Cookie (Chỉ xảy ra khi Login)
       generateToken(res, user._id, user.role);
 
       res.status(200).json({
@@ -58,7 +58,6 @@ const loginUser = async (req, res) => {
         role: user.role
       });
     } else {
-      // Nếu user không tồn tại hoặc sai mật khẩu
       res.status(401).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
     }
   } catch (error) {
