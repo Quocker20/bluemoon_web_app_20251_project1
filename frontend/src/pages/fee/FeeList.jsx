@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Tag, Button, Space, Popconfirm, message, Input } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 
 const { Search } = Input;
@@ -14,7 +14,7 @@ const FeeList = () => {
   const fetchFees = async (keyword = '') => {
     setLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/fees', {
+      const { data } = await axiosClient.get('/fees', {
         params: { keyword }
       });
       setFees(data);
@@ -32,7 +32,7 @@ const FeeList = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/fees/${id}`);
+      await axiosClient.delete(`/fees/${id}`);
       message.success('Đã xóa khoản phí');
       fetchFees();
     } catch (error) {

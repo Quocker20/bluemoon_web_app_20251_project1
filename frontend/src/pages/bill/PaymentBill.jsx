@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Descriptions, Table, Button, Tag, message, Typography, Divider, Space } from 'antd';
 import { ArrowLeftOutlined, DollarOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 
 const { Title, Text } = Typography;
 
@@ -14,11 +14,10 @@ const PaymentBill = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Load chi tiết hóa đơn
   useEffect(() => {
     const fetchBillDetail = async () => {
       try {
-        const { data } = await axios.get(`http://localhost:5000/api/bills/${id}`);
+        const { data } = await axiosClient.get(`/bills/${id}`);
         setBill(data);
       } catch (error) {
         message.error('Không tìm thấy hóa đơn');
@@ -31,15 +30,14 @@ const PaymentBill = () => {
     fetchBillDetail();
   }, [id, navigate]);
 
-  // Xử lý nút thanh toán
   const handleConfirmPayment = async () => {
     if (!window.confirm('Xác nhận đã thu đủ tiền cho hóa đơn này?')) return;
     
     setProcessing(true);
     try {
-      await axios.put(`http://localhost:5000/api/bills/${id}/pay`);
+      await axiosClient.put(`/bills/${id}/pay`);
       message.success('Thanh toán thành công!');
-      navigate('/bills'); // Quay về danh sách
+      navigate('/bills');
     } catch (error) {
       message.error(error.response?.data?.message || 'Lỗi thanh toán');
     } finally {
@@ -50,7 +48,6 @@ const PaymentBill = () => {
   if (loading) return <div style={{ padding: 20 }}>Đang tải...</div>;
   if (!bill) return null;
 
-  // Cột cho bảng chi tiết phí bên trong màn hình thanh toán
   const columns = [
     { title: 'Khoản phí', dataIndex: 'feeName', key: 'feeName' },
     { title: 'Đơn giá', dataIndex: 'unitPrice', render: v => v.toLocaleString() },

@@ -1,36 +1,32 @@
 import React, { useState } from 'react';
 import { Card, Form, Input, Button, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import axiosClient from '../api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
 const LoginScreen = () => {
-  const navigate = useNavigate(); // Dùng để chuyển trang
-  const [loading, setLoading] = useState(false); // Trạng thái loading của nút
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      // 1. Gọi API Login (Cổng 5000)
-      // Lưu ý: Đảm bảo Backend đang chạy ở port 5000
-      const { data } = await axios.post('http://localhost:5000/api/auth/login', {
+      // Dùng axiosClient để gọi API login
+      const { data } = await axiosClient.post('/auth/login', {
         username: values.username,
         password: values.password,
       });
 
-      // 2. Nếu thành công:
       message.success('Đăng nhập thành công!');
       
-      // Lưu thông tin user vào bộ nhớ trình duyệt (để giữ trạng thái đăng nhập)
+      // Lưu thông tin user (nhưng KHÔNG cần lưu token ở đây vì nó nằm trong Cookie httpOnly rồi)
       localStorage.setItem('userInfo', JSON.stringify(data));
 
-      // 3. Chuyển hướng sang trang Dashboard (hoặc trang chủ)
       navigate('/'); 
       
     } catch (error) {
-      // 4. Xử lý lỗi
       const errorMsg = error.response && error.response.data.message
         ? error.response.data.message
         : 'Lỗi kết nối Server';
@@ -50,7 +46,7 @@ const LoginScreen = () => {
           name="login_form"
           initialValues={{ remember: true }}
           onFinish={onFinish}
-          size="large" // Làm form to đẹp hơn chút
+          size="large"
         >
           <Form.Item
             name="username"
@@ -74,7 +70,7 @@ const LoginScreen = () => {
               type="primary" 
               htmlType="submit" 
               style={{ width: '100%' }}
-              loading={loading} // Hiệu ứng xoay vòng khi đang gọi API
+              loading={loading}
             >
               Đăng nhập
             </Button>

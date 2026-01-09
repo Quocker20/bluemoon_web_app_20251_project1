@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, Input, InputNumber, Select, Switch, Button, message, Space } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
@@ -15,10 +15,9 @@ const AddFee = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      // Gọi API tạo mới
-      await axios.post('http://localhost:5000/api/fees', values);
+      await axiosClient.post('/fees', values);
       message.success('Thêm khoản phí thành công!');
-      navigate('/fees'); // Quay lại danh sách
+      navigate('/fees');
     } catch (error) {
       console.error(error);
       message.error(error.response?.data?.message || 'Lỗi khi thêm phí');
@@ -41,13 +40,12 @@ const AddFee = () => {
         layout="vertical"
         onFinish={onFinish}
         initialValues={{
-          isMandatory: true, // Mặc định là bắt buộc
-          calculationUnit: 'FIXED', // Mặc định là cố định
+          isMandatory: true,
+          calculationUnit: 'FIXED',
           isActive: true
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {/* Cột 1 */}
           <div>
             <Form.Item
               name="name"
@@ -71,7 +69,6 @@ const AddFee = () => {
             </Form.Item>
           </div>
 
-          {/* Cột 2 */}
           <div>
             <Form.Item
               name="calculationUnit"

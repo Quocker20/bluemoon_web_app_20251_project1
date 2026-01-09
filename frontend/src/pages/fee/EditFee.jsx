@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, InputNumber, Select, Switch, Button, message, Space, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const { Option } = Select;
@@ -9,17 +9,15 @@ const { TextArea } = Input;
 
 const EditFee = () => {
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true); // State load dữ liệu ban đầu
+  const [fetching, setFetching] = useState(true);
   const navigate = useNavigate();
-  const { id } = useParams(); // Lấy ID từ URL
+  const { id } = useParams();
   const [form] = Form.useForm();
 
-  // 1. Load dữ liệu cũ lên form
   useEffect(() => {
     const fetchFee = async () => {
       try {
-        const { data } = await axios.get(`http://localhost:5000/api/fees/${id}`);
-        // Đổ dữ liệu vào form
+        const { data } = await axiosClient.get(`/fees/${id}`);
         form.setFieldsValue(data);
       } catch (error) {
         message.error('Không tìm thấy thông tin khoản phí');
@@ -32,11 +30,10 @@ const EditFee = () => {
     fetchFee();
   }, [id, form, navigate]);
 
-  // 2. Xử lý lưu cập nhật
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/fees/${id}`, values);
+      await axiosClient.put(`/fees/${id}`, values);
       message.success('Cập nhật thành công!');
       navigate('/fees');
     } catch (error) {
