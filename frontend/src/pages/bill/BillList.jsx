@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Tag, Button, Modal, Form, InputNumber, message, Space, Typography, Input } from 'antd';
-import { PlusOutlined, ReloadOutlined, DollarOutlined } from '@ant-design/icons';
+// Thêm icon QrcodeOutlined để dùng cho nút thanh toán của cư dân
+import { PlusOutlined, ReloadOutlined, DollarOutlined, QrcodeOutlined } from '@ant-design/icons';
 import axiosClient from '../../api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,8 +17,10 @@ const BillList = () => {
   const [creating, setCreating] = useState(false);
   const [form] = Form.useForm();
 
-  // 1. Lấy thông tin User hiện tại từ LocalStorage để check quyền
+  // 1. Lấy thông tin User hiện tại
   const user = JSON.parse(localStorage.getItem('userInfo')) || {};
+  // Biến kiểm tra xem có phải Admin không
+  const isAdmin = user.role === 'bqt_admin';
 
   const fetchBills = async (keyword = '') => {
     setLoading(true);
@@ -114,19 +117,29 @@ const BillList = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_, record) => (
-        // Logic: Chỉ hiện nút Thu tiền nếu (Chưa thanh toán) VÀ (Là Admin)
-        record.status === 'Unpaid' && user.role === 'bqt_admin' && (
+      render: (_, record) => {
+        // Nếu đã thanh toán rồi thì thôi
+        if (record.status !== 'Unpaid') return null;
+
+        // Logic hiển thị nút:
+        // - Admin: Nút "Thu tiền" (Màu xanh dương mặc định)
+        // - Cư dân: Nút "Thanh toán Online" (Màu xanh lá cho nổi bật)
+        return (
           <Button 
             type="primary" 
             size="small"
-            icon={<DollarOutlined />}
+            // Admin dùng icon Dollar, Cư dân dùng icon QR code
+            icon={isAdmin ? <DollarOutlined /> : <QrcodeOutlined />} 
+            style={{ 
+              backgroundColor: isAdmin ? undefined : '#52c41a', // Cư dân màu xanh lá
+              borderColor: isAdmin ? undefined : '#52c41a' 
+            }}
             onClick={() => navigate(`/bills/pay/${record._id}`)}
           >
-            Thu tiền
+            {isAdmin ? 'Thu tiền' : 'Thanh toán'}
           </Button>
-        )
-      )
+        );
+      }
     }
   ];
 
@@ -145,7 +158,7 @@ const BillList = () => {
           <Button icon={<ReloadOutlined />} onClick={() => fetchBills()}>Làm mới</Button>
           
           {/* Chỉ Admin mới được thấy nút "Tính hóa đơn tháng mới" */}
-          {user.role === 'bqt_admin' && (
+          {isAdmin && (
             <Button 
               type="primary" 
               icon={<PlusOutlined />} 

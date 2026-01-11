@@ -1,12 +1,16 @@
 // File: backend/routes/paymentRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createPaymentUrl, vnpayIpn } = require('../controllers/paymentController');
+// Import thêm hàm vnpayReturn
+const { createPaymentUrl, vnpayIpn, vnpayReturn } = require('../controllers/paymentController');
 
-// API tạo link thanh toán (Được gọi từ Frontend khi bấm nút Thanh toán)
+// Tạo link thanh toán
 router.post('/create_payment_url', createPaymentUrl);
 
-// API nhận thông báo từ VNPAY (Được gọi từ Server VNPAY)
+// Nhận IPN từ VNPAY (Server thật)
 router.get('/vnpay_ipn', vnpayIpn);
+
+// Nhận Return từ Frontend (Localhost dùng cái này)
+router.get('/vnpay_return', vnpayReturn);
 
 module.exports = router;

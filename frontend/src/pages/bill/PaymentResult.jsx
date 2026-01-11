@@ -1,40 +1,58 @@
 // File: frontend/src/pages/bill/PaymentResult.jsx
-import React from 'react';
-import { Result, Button, Card } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Result, Button, Card, Spin, message } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axiosClient from '../../api/axiosClient';
 
 const PaymentResult = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState(null); // 'success' | 'error'
+  const [msg, setMsg] = useState('Đang xử lý kết quả...');
 
-  // Lấy tham số từ URL
-  const params = new URLSearchParams(location.search);
-  const responseCode = params.get('vnp_ResponseCode');
+  useEffect(() => {
+    const checkResult = async () => {
+      try {
+        // Lấy chuỗi query params từ URL (vnp_Amount, vnp_ResponseCode...)
+        const queryStr = location.search; 
 
-  // Logic xác định trạng thái (Tính trực tiếp, KHÔNG dùng useState/useEffect để tránh lỗi lặp)
-  // Mã '00' của VNPAY nghĩa là Thành công
-  let status = 'error';
-  if (responseCode === '00') {
-    status = 'success';
-  } else if (!responseCode) {
-    status = 'warning'; // Trường hợp vào trang này mà không có mã gì
-  }
+        if (!queryStr) {
+            setLoading(false);
+            setStatus('error');
+            setMsg('Không tìm thấy thông tin giao dịch.');
+            return;
+        }
 
-  // Giao diện khi không có mã giao dịch (người dùng tự gõ link vào)
-  if (status === 'warning') {
+        // Gọi về Backend để verify chữ ký và update DB
+        const res = await axiosClient.get(`/payment/vnpay_return${queryStr}`);
+        
+        if (res.data.code === '00') {
+            setStatus('success');
+            setMsg('Thanh toán thành công! Hóa đơn đã được cập nhật.');
+            message.success('Gạch nợ hóa đơn thành công!');
+        } else {
+            setStatus('error');
+            setMsg(res.data.message || 'Giao dịch thất bại.');
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus('error');
+        setMsg('Có lỗi xảy ra khi xác nhận thanh toán.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkResult();
+  }, [location.search]);
+
+  if (loading) {
     return (
-      <Card style={{ marginTop: 50, maxWidth: 600, margin: '50px auto', textAlign: 'center' }}>
-        <Result
-          status="warning"
-          title="Không tìm thấy kết quả"
-          subTitle="Vui lòng thực hiện thanh toán từ trang hóa đơn."
-          extra={[
-            <Button type="primary" key="back" onClick={() => navigate('/bills')}>
-              Về danh sách hóa đơn
-            </Button>
-          ]}
-        />
-      </Card>
+        <Card style={{ marginTop: 50, textAlign: 'center', maxWidth: 600, margin: '50px auto' }}>
+            <Spin size="large" />
+            <p style={{ marginTop: 20 }}>Đang xác thực giao dịch với VNPAY...</p>
+        </Card>
     );
   }
 
@@ -44,7 +62,7 @@ const PaymentResult = () => {
         <Result
           status="success"
           title="Thanh toán thành công!"
-          subTitle="Hóa đơn của bạn đã được gạch nợ. Cảm ơn bạn đã sử dụng dịch vụ."
+          subTitle={msg}
           extra={[
             <Button type="primary" key="console" onClick={() => navigate('/bills')}>
               Về danh sách hóa đơn
@@ -58,10 +76,10 @@ const PaymentResult = () => {
         <Result
           status="error"
           title="Thanh toán thất bại"
-          subTitle="Có lỗi xảy ra hoặc bạn đã hủy giao dịch. Vui lòng thử lại."
+          subTitle={msg}
           extra={[
             <Button type="primary" key="console" onClick={() => navigate('/bills')}>
-              Thử lại
+              Thử lại / Về danh sách
             </Button>,
           ]}
         />
