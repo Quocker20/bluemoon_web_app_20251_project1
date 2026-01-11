@@ -14,7 +14,7 @@ router.route('/').get(getBills);
 // Route tạo hóa đơn
 router.route('/generate').post(generateAllMonthlyBills);
 
-// Route chi tiết và thanh toán ---
+
 router.route('/:id').get(getBillById);
 router.route('/:id/pay').put(payBill);
 

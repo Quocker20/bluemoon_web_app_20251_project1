@@ -22,12 +22,14 @@ const householdRoutes = require('./routes/householdRoutes');
 const feeRoutes = require('./routes/feeRoutes');
 const billRoutes = require('./routes/billRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/households', householdRoutes);
 app.use('/api/fees', feeRoutes);
 app.use('/api/bills', billRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');

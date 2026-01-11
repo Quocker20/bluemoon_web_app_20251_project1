@@ -1,6 +1,7 @@
+// File: frontend/src/pages/bill/PaymentBill.jsx
 import React, { useEffect, useState } from 'react';
-import { Card, Descriptions, Table, Button, Tag, message, Typography, Divider, Space } from 'antd';
-import { ArrowLeftOutlined, DollarOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Table, Button, Tag, message, Typography, Divider, Space, Radio } from 'antd';
+import { ArrowLeftOutlined, DollarOutlined, QrcodeOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
@@ -10,11 +11,19 @@ const PaymentBill = () => {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('VNPAY'); // Mặc định chọn VNPAY
   
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Lấy thông tin user để phân quyền
+  const user = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const isAdmin = user.role === 'bqt_admin';
 
   useEffect(() => {
+    // Nếu là Admin thì ưu tiên chọn Tiền mặt cho nhanh
+    if (isAdmin) setPaymentMethod('CASH');
+
     const fetchBillDetail = async () => {
       try {
         const { data } = await axiosClient.get(`/bills/${id}`);
@@ -28,20 +37,41 @@ const PaymentBill = () => {
       }
     };
     fetchBillDetail();
-  }, [id, navigate]);
+  }, [id, navigate, isAdmin]);
 
-  const handleConfirmPayment = async () => {
-    if (!window.confirm('Xác nhận đã thu đủ tiền cho hóa đơn này?')) return;
-    
+  const handlePayment = async () => {
     setProcessing(true);
     try {
-      await axiosClient.put(`/bills/${id}/pay`);
-      message.success('Thanh toán thành công!');
-      navigate('/bills');
+      if (paymentMethod === 'CASH') {
+        // --- CÁCH 1: TIỀN MẶT (Chỉ Admin) ---
+        if (!window.confirm('Xác nhận đã thu đủ tiền mặt?')) {
+          setProcessing(false);
+          return;
+        }
+        await axiosClient.put(`/bills/${id}/pay`);
+        message.success('Thanh toán tiền mặt thành công!');
+        navigate('/bills');
+
+      } else {
+        // --- CÁCH 2: VNPAY (Online) ---
+        const res = await axiosClient.post('/payment/create_payment_url', {
+          billId: bill._id,
+          amount: bill.totalAmount
+        });
+        
+        if (res.data.paymentUrl) {
+          // Chuyển hướng trình duyệt sang trang thanh toán của VNPAY
+          window.location.href = res.data.paymentUrl;
+        } else {
+          message.error('Lỗi không tạo được link thanh toán');
+        }
+      }
     } catch (error) {
+      console.error(error);
       message.error(error.response?.data?.message || 'Lỗi thanh toán');
     } finally {
-      setProcessing(false);
+      // Nếu là VNPAY thì không tắt loading ngay để người dùng đợi chuyển trang
+      if (paymentMethod === 'CASH') setProcessing(false);
     }
   };
 
@@ -50,9 +80,9 @@ const PaymentBill = () => {
 
   const columns = [
     { title: 'Khoản phí', dataIndex: 'feeName', key: 'feeName' },
-    { title: 'Đơn giá', dataIndex: 'unitPrice', render: v => v.toLocaleString() },
+    { title: 'Đơn giá', dataIndex: 'unitPrice', render: v => v?.toLocaleString() },
     { title: 'Số lượng', dataIndex: 'quantity' },
-    { title: 'Thành tiền', dataIndex: 'amount', render: v => <b>{v.toLocaleString()} đ</b> },
+    { title: 'Thành tiền', dataIndex: 'amount', render: v => <b>{v?.toLocaleString()} đ</b> },
   ];
 
   return (
@@ -78,7 +108,6 @@ const PaymentBill = () => {
 
       <Divider />
 
-      <Title level={5}>Chi tiết phí</Title>
       <Table 
         dataSource={bill.items} 
         columns={columns} 
@@ -99,20 +128,45 @@ const PaymentBill = () => {
         )}
       />
 
-      <div style={{ marginTop: 20, textAlign: 'right' }}>
-        {bill.status === 'Unpaid' && (
-          <Button 
-            type="primary" 
-            size="large" 
-            icon={<DollarOutlined />} 
-            onClick={handleConfirmPayment}
-            loading={processing}
-            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+      {/* Chỉ hiện khu vực thanh toán nếu hóa đơn chưa trả */}
+      {bill.status === 'Unpaid' && (
+        <div style={{ marginTop: 30, padding: 20, background: '#f9f9f9', borderRadius: 8 }}>
+          <Title level={5}>Chọn phương thức thanh toán:</Title>
+          
+          <Radio.Group 
+            onChange={e => setPaymentMethod(e.target.value)} 
+            value={paymentMethod}
+            style={{ marginBottom: 20 }}
           >
-            XÁC NHẬN ĐÃ THU TIỀN
-          </Button>
-        )}
-      </div>
+            {/* Chỉ Admin mới thấy nút Tiền mặt */}
+            {isAdmin && (
+              <Radio.Button value="CASH" style={{ height: 50, lineHeight: '50px', padding: '0 30px' }}>
+                <DollarOutlined /> Tiền mặt
+              </Radio.Button>
+            )}
+            
+            <Radio.Button value="VNPAY" style={{ height: 50, lineHeight: '50px', padding: '0 30px', marginLeft: isAdmin ? 10 : 0 }}>
+              <QrcodeOutlined /> Thanh toán Online (VNPAY)
+            </Radio.Button>
+          </Radio.Group>
+
+          <div>
+            <Button 
+              type="primary" 
+              size="large" 
+              onClick={handlePayment}
+              loading={processing}
+              style={{ 
+                minWidth: 200, 
+                height: 50,
+                backgroundColor: paymentMethod === 'CASH' ? '#52c41a' : '#005baa' 
+              }}
+            >
+              {paymentMethod === 'CASH' ? 'XÁC NHẬN THU TIỀN' : 'THANH TOÁN NGAY'}
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

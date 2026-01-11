@@ -1,3 +1,4 @@
+// File: backend/models/BillModel.js
 const mongoose = require('mongoose');
 
 const billSchema = new mongoose.Schema({
@@ -14,7 +15,18 @@ const billSchema = new mongoose.Schema({
     }
   ],
   totalAmount: { type: Number, required: true, default: 0 },
-  status: { type: String, enum: ['Unpaid', 'Paid'], default: 'Unpaid' }
+  status: { type: String, enum: ['Unpaid', 'Paid'], default: 'Unpaid' },
+
+  // --- [MỚI] Phần bổ sung cho thanh toán & báo cáo ---
+  paymentMethod: { 
+    type: String, 
+    enum: ['Cash', 'VNPAY', 'BankTransfer'], 
+    default: 'Cash' 
+  },
+  transactionId: { type: String }, // Mã giao dịch của VNPAY (để đối soát)
+  payDate: { type: Date }          // Ngày giờ thanh toán thực tế
+  // --------------------------------------------------
+
 }, { timestamps: true });
 
 // Index tránh trùng hóa đơn tháng

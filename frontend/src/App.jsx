@@ -22,6 +22,7 @@ import EditHousehold from './pages/household/EditHousehold';
 import AddFee from './pages/fee/AddFee';
 import EditFee from './pages/fee/EditFee';
 import PaymentBill from './pages/bill/PaymentBill';
+import PaymentResult from './pages/bill/PaymentResult';
 import Dashboard from './pages/Dashboard';
 // Import component Modal vừa tạo
 import RegisterModal from './components/RegisterModal';
@@ -167,6 +168,7 @@ function App() {
 
         <Route path="/bills" element={<PrivateRoute><BillList /></PrivateRoute>} />
         <Route path="/bills/pay/:id" element={<PrivateRoute><PaymentBill /></PrivateRoute>} />
+        <Route path="/payment-result" element={<PrivateRoute><PaymentResult /></PrivateRoute>} />
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
