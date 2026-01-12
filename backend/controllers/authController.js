@@ -1,30 +1,21 @@
-// File: backend/controllers/authController.js
-
 const User = require('../models/UserModel');
 const generateToken = require('../utils/generateToken');
 
-// @desc    Admin tạo user mới (Chỉ tạo, KHÔNG tự đăng nhập)
-// @route   POST /api/auth/register
 const registerUser = async (req, res) => {
   try {
     const { username, password, role, resident_id } = req.body;
 
-    // 1. Kiểm tra username đã tồn tại chưa?
     const userExists = await User.findOne({ username });
     if (userExists) {
       return res.status(400).json({ message: 'Tên đăng nhập đã tồn tại' });
     }
 
-    // 2. Tạo user mới
     const user = await User.create({
       username,
       password,
       role,
       resident_id 
     });
-
-    // --- QUAN TRỌNG: Đã xóa dòng generateToken ở đây ---
-    // Để không ghi đè cookie của Admin đang thao tác.
 
     res.status(201).json({
       _id: user._id,
@@ -38,18 +29,13 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Đăng nhập (Xác thực) user
-// @route   POST /api/auth/login
 const loginUser = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // 1. Tìm user bằng username
     const user = await User.findOne({ username });
 
-    // 2. Kiểm tra user và so sánh mật khẩu
     if (user && (await user.matchPassword(password))) {
-      // 3. Tạo Token và lưu vào Cookie (Chỉ xảy ra khi Login)
       generateToken(res, user._id, user.role);
 
       res.status(200).json({
@@ -65,4 +51,28 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    // req.user được lấy từ middleware 'protect'
+    const user = await User.findById(req.user._id);
+
+    if (user && (await user.matchPassword(oldPassword))) {
+      user.password = newPassword;
+      // Khi save(), pre-save hook trong Model sẽ tự động hash password mới
+      await user.save(); 
+      res.status(200).json({ message: 'Đổi mật khẩu thành công!' });
+    } else {
+      res.status(400).json({ message: 'Mật khẩu cũ không đúng' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { 
+  registerUser, 
+  loginUser,
+  changePassword 
+};

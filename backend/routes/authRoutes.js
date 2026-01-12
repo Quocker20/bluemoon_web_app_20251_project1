@@ -1,17 +1,18 @@
-// File: backend/routes/authRoutes.js
-
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser } = require('../controllers/authController');
+const { registerUser, loginUser, changePassword } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-// Route Đăng ký: Cần đăng nhập (protect) VÀ là Admin (admin) mới được tạo
+// Route Đăng ký (Chỉ Admin)
 router.post('/register', protect, admin, registerUser);
 
-// Route Đăng nhập: Ai cũng vào được (Public)
+// Route Đăng nhập (Public)
 router.post('/login', loginUser);
 
-// (Tùy chọn) Route Đăng xuất: Xóa cookie
+// --- Route Đổi mật khẩu (Cần đăng nhập) ---
+router.put('/profile/password', protect, changePassword);
+
+// Route Đăng xuất
 router.post('/logout', (req, res) => {
   res.cookie('jwt', '', {
     httpOnly: true,
